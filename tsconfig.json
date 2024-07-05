@@ -1,0 +1,8 @@
+{
+    "compilerOptions": {
+        "rootDir": "./src", // Les fichiers à compiler sont dans ./src
+        "outDir": "./build",    // Les fichiers JavaScript compilés seront dans ./build
+        "module": "NodeNext"  /* Le JavaScript généré lors de la compilation utilise
+         la norme ECMAScript la plus récente.*/
+    }
+}
