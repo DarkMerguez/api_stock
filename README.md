@@ -66,6 +66,7 @@ erDiagram
     Enterprise{
         id INT
         name TEXT
+        address TEXT
         enterpriseCategoryId INT
         imagesId INT
     }
