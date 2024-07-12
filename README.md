@@ -40,6 +40,7 @@ erDiagram
         password TEXT
         email TEXT
         userImage INT
+        enterpriseID INT
     }
     Images{
         id INT
