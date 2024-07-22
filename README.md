@@ -26,7 +26,7 @@ erDiagram
     }
     CaracProduct["CaracProduct(join)"]{
         id INT
-        value TEXT
+        value INT
         caracId INT
         productId INT
     }
