@@ -40,7 +40,7 @@ erDiagram
         lastName TEXT
         password TEXT
         email TEXT
-        userImage INT
+        imageId INT
         enterpriseID INT
         roleId INT
     }
