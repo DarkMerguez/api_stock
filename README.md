@@ -11,7 +11,7 @@ erDiagram
         isFavorite BOOLEAN
         stock INT
         enterpriseId INT
-        productCategoryId	
+        productCategoryId INT
     }
         ProductCart["ProductCart(join)"]{
         id INT
