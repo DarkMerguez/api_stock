@@ -32,7 +32,7 @@ erDiagram
     }
     Cart{
         id INT
-        userId INT
+        enterpriseId INT
     }
     User{
         id INT
