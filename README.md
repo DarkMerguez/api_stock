@@ -41,6 +41,7 @@ erDiagram
         email TEXT
         userImage INT
         enterpriseID INT
+        roleId INT
     }
     Images{
         id INT
