@@ -8,8 +8,6 @@ const Image = sequelize.define("Image", {
 })
 
 
-
-
 User.belongsTo(Image);
 Image.hasOne(User);
 
