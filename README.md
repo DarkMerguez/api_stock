@@ -75,13 +75,15 @@ erDiagram
     }
     Bill{
         id INT
-        enterprise1Id INT
-        enterprise2Id INT
+        sellerId INT
+        buyerId INT
         orderId INT
     }
     Order{
         id INT
         status INT
+        sellerId INT
+        buyerId INT
     }
     EnterpriseOrder["EnterpriseOrder(join)"]{
         id INT
