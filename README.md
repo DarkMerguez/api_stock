@@ -70,6 +70,7 @@ erDiagram
         id INT
         name TEXT
         address TEXT
+        siret INT
         enterpriseCategoryId INT
         imagesId INT
     }
