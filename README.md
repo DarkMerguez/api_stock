@@ -85,16 +85,6 @@ erDiagram
         sellerId INT
         buyerId INT
     }
-    EnterpriseOrder["EnterpriseOrder(join)"]{
-        id INT
-        enterpriseId INT
-        orderId INT
-    }
-    EnterpriseBill["EnterpriseBill(join)"]{
-        id INT
-        enterpriseId INT
-        billId INT
-    }
     BillProduct["BillProduct(join)"]{
         id INT
         billId INT
@@ -140,9 +130,7 @@ erDiagram
 
     Enterprise ||--|{ User : has
 
-    Enterprise ||--|{ EnterpriseBill : has
-    Bill ||--|{ EnterpriseBill : has
+    Enterprise ||--|{ Bill : has
 
-    Enterprise ||--|{ EnterpriseOrder : has
-    Order ||--|{ EnterpriseOrder : has
+    Enterprise ||--|{ Order : has
 ```
