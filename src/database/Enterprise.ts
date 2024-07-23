@@ -4,7 +4,12 @@ const User = require("./User");
 
 const Enterprise = sequelize.define("Enterprise", {
     name: DataTypes.TEXT,
-    address: DataTypes.TEXT
+    address: DataTypes.TEXT,
+    siret: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        unique: true
+    }
 });
 
 
