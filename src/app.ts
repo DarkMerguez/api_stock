@@ -114,6 +114,8 @@ app.post("/product", async (req, res) => {
 
 
 
+// ROUTES POUR LES ENTREPRISES :
+
 
 app.listen(8051, () => {
     console.log("Youhouuuuu serveur lancé sur localhost:8051");

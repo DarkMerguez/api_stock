@@ -42,5 +42,79 @@ module.exports.ProductImage = require("./ProductImage");
 
 sequelize.sync({ force: true })
     .then(async () => {
-        console.log("Les modèles et les tables sont synchronisés.")
+        console.log("Les modèles et les tables sont synchronisés.");
+
+        const Product = sequelize.models.Product;
+        const Enterprise = sequelize.models.Enterprise;
+        const productCategory = sequelize.models.ProductCategory;
+        const enterpriseCategory = sequelize.models.EnterpriseCategory;
+
+        const produits = await Product.bulkCreate([
+            {
+                name: "Peugeot 208 jaune",
+                price: 2000,
+                description: "Voiture de la Poste",
+                isFavorite: 1,
+                stock: 10
+            },
+            {
+                name: "Renault Partner jaune",
+                price: 10000,
+                description: "Camion de livraison des colis",
+                isFavorite: 0,
+                stock: 1000
+            }
+        ]);
+
+        const produit = await Product.create(
+            {
+                name: "PC gaming Asus",
+                price: 3000,
+                description: "Si ta mère te l'achète tu seras vraiment bien",
+                isFavorite: 1,
+                stock: 50
+            }
+        )
+
+        const enterprises = await Enterprise.bulkCreate([
+            {
+                name: "La Poste",
+                address: "12 rue du 22 Fevrier 1993",
+                siret: 2222222
+            },
+            {
+                name: "Stock'tout",
+                address: "1075 Avenue du Maréchal Laroche",
+                siret: 22021993
+            }
+        ]);
+
+        const enterprise = await Enterprise.create(
+            {
+                name: "Tech'83",
+                address: "13 boulevard Massinissa",
+                siret: 492019394
+            });
+
+        const voitures = await productCategory.create({
+            title: "Voitures"
+        })
+
+        const ordinateurs = await productCategory.create({
+            title: "Ordinateurs"
+        })
+
+        const logistique = await enterpriseCategory.create({
+            title: "Logistique"
+        })
+
+        const informatique = await enterpriseCategory.create({
+            title: "Informatique"
+        })
+
+        await voitures.addProducts(produits);
+        await ordinateurs.addProduct(produit);
+
+        await logistique.addEnterprises(enterprises);
+        await informatique.addEnterprise(enterprise);
     })

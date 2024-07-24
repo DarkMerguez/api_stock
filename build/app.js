@@ -94,6 +94,7 @@ app.post("/product", async (req, res) => {
         res.status(400).json("catégorie inexistante");
     }
 });
+// ROUTES POUR LES ENTREPRISES :
 app.listen(8051, () => {
     console.log("Youhouuuuu serveur lancé sur localhost:8051");
 });
