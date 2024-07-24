@@ -99,4 +99,6 @@ sequelize.sync({ force: true })
     await ordinateurs.addProduct(produit);
     await logistique.addEnterprises(enterprises);
     await informatique.addEnterprise(enterprise);
+    await enterprises[0].addProducts(produits);
+    await enterprise.addProduct(produit);
 });

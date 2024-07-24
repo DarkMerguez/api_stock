@@ -110,11 +110,82 @@ app.post("/product", async (req, res) => {
         res.status(200).json(product.name + " a été ajouté à la liste des produits"); 
     }
     else { res.status(400).json("catégorie inexistante") }
-})
+});
 
 
 
 // ROUTES POUR LES ENTREPRISES :
+
+
+app.get("/enterprises", async (req, res) => {
+
+    try {
+        const enterprises = await Enterprise.findAll();
+
+        enterprises.length > 0 ? res.status(200).json(enterprises) : res.status(404).json({ message: "Aucune entreprise" });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Erreur lors de la recherche des entreprises." });
+    }
+});
+
+
+app.get("/enterprise/:id", async (req, res) => {
+    const enterprise = await Enterprise.findByPk(req.params.id)
+        .catch((error) => res.status(500).json("Erreur 500"));
+    if (enterprise) {
+        res.status(200).json(enterprise);
+    } else {
+        res.status(404).json({ message: "Aucune entreprise trouvé avec cet id." });
+    }
+});
+
+
+app.get("/enterprises/search/:text", async (req, res) => {
+    const text = req.params.text.toLowerCase();
+    try {
+        // doc sequelize : op like
+        const enterprises = await Enterprise.findAll({
+            where: {
+                [Op.or]: [
+                    {
+                        name: {
+                            [Op.like]: `%${text}%`
+                        }
+                    }
+                    ,
+                    {
+                        siret: text
+                    }
+                ]
+            }
+        });
+
+        enterprises.length > 0 ? res.status(200).json(enterprises) : res.status(404).json({ message: "Aucune entreprise trouvé avec cette entrée." });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Erreur lors de la recherche des entreprises." });
+    }
+});
+
+app.post("/enterprise", async (req, res) => {
+    const newEnterprise = req.body;
+    const enterprise = {
+        name: newEnterprise.name,
+        address: newEnterprise.address,
+        siret: newEnterprise.siret,
+        EnterpriseCategoryId: newEnterprise.EnterpriseCategoryId,
+        ImageId: newEnterprise.ImageId
+    };
+    const enterpriseCategory = await EnterpriseCategory.findByPk(newEnterprise.EnterpriseCategoryId)
+    if (enterpriseCategory) { 
+        await Enterprise.create(enterprise)
+        res.status(200).json(enterprise.name + " a été ajoutée à la liste des entreprises"); 
+    }
+    else { res.status(400).json("catégorie d'entreprise inexistante") }
+});
 
 
 app.listen(8051, () => {
