@@ -114,6 +114,41 @@ app.post("/product", async (req, res) => {
 
 
 
+app.delete("/product/:id", async (req, res) => {
+    try {
+        const product = await Product.findByPk(req.params.id);
+        const productDestroyed = product.dataValues;
+        await product.destroy({
+            where: {
+                id: req.params.id
+            }
+        });
+        product ? res.status(200).json({ message: "Produit supprimé : ", data: productDestroyed }) : res.status(400).json({ message: "Erreur lors de la suppression" });
+    } catch (error) {
+        res.status(500).json({ message: "Erreur 500" });
+    }
+});
+
+app.put("/product", async (req, res) => {
+    try {
+        const modifiedProduct = req.body;
+
+        await Product.update(modifiedProduct, {
+            where: {
+                id: modifiedProduct.id
+            }
+        });
+
+        // Recharger les données du Produit mis à jour depuis la base de données
+        const updatedProduct = await Product.findByPk(modifiedProduct.id);
+
+        modifiedProduct ? res.status(200).json(updatedProduct) : res.status(400).json({ message: "Erreur lors de la modification" });
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors de la modification du Produit." });
+    }
+});
+
+
 // ROUTES POUR LES ENTREPRISES :
 
 
@@ -188,6 +223,42 @@ app.post("/enterprise", async (req, res) => {
 });
 
 
+app.delete("/enterprise/:id", async (req, res) => {
+    try {
+        const enterprise = await Enterprise.findByPk(req.params.id);
+        const enterpriseDestroyed = enterprise.dataValues;
+        await enterprise.destroy({
+            where: {
+                id: req.params.id
+            }
+        });
+        enterprise ? res.status(200).json({ message: "Entreprise supprimée : ", data: enterpriseDestroyed }) : res.status(400).json({ message: "Erreur lors de la suppression" });
+    } catch (error) {
+        res.status(500).json({ message: "Erreur 500" });
+    }
+});
+
+
+app.put("/enterprise", async (req, res) => {
+    try {
+        const modifiedEnterprise = req.body;
+
+        await Enterprise.update(modifiedEnterprise, {
+            where: {
+                id: modifiedEnterprise.id
+            }
+        });
+
+        // Recharger les données de l'entreprise mise à jour depuis la base de données
+        const updatedEnterprise = await Enterprise.findByPk(modifiedEnterprise.id);
+
+        modifiedEnterprise ? res.status(200).json(updatedEnterprise) : res.status(400).json({ message: "Erreur lors de la modification" });
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors de la modification de l'entreprise." });
+    }
+});
+
+
 
 
 // ROUTES POUR LES USERS :
@@ -234,6 +305,138 @@ app.post("/user/signup", async (req, res) => {
     }
 });
 
+
+// ROUTES PRODUCTCATEGORIES :
+
+
+app.get("/productcategories", async (req, res) => {
+    try {
+        const categories = await ProductCategory.findAll();
+        categories != undefined ? res.status(200).json(categories) : res.status(400).json({ message: "Erreur 400" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json("erreur 500");
+    }
+})
+
+
+app.get("/productcategory/:id", async (req, res) => {
+    try {
+        const category = await ProductCategory.findByPk(req.params.id);
+        category != undefined ? res.status(200).json(category) : res.status(400).json({ message: "Erreur 400" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json("Erreur 500");
+    }
+});
+
+
+app.post("/productcategory", async (req, res) => {
+    const newCategory = req.body;
+    const category = await ProductCategory.create({
+        title: newCategory.title
+    });
+    res.status(200).json(category.title + " a été ajouté à la liste des catégories de produits");
+});
+
+
+app.delete("/productcategory/:id", async (req, res) => {
+    try {
+        const category = await ProductCategory.findByPk(req.params.id);
+        const categoryDestroyed = category.dataValues;
+        await category.destroy();
+        category != undefined ? res.status(200).json({ message: "catégorie de produit supprimée", data: categoryDestroyed }) : res.status(400).json({ message: "Erreur 400" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json("erreur 500");
+    }
+});
+
+
+app.put("/productcategory", async (req, res) => {
+    try {
+        const modifiedCategory = req.body;
+
+        await ProductCategory.update(modifiedCategory, {
+            where: {
+                id: modifiedCategory.id
+            }
+        });
+
+        // Recharger les données de la Catégorie mise à jour depuis la base de données
+        const updatedCategory = await ProductCategory.findByPk(modifiedCategory.id);
+
+        updatedCategory != undefined ? res.status(200).json(updatedCategory) : res.status(400).json({ message: "Erreur lors de la modification" });
+    } catch (error) {
+        res.status(500).json({ message: "Erreur 500" });
+    }
+});
+
+
+// ROUTES ENTERPRISECATEGORIES :
+
+app.get("/enterprisecategories", async (req, res) => {
+    try {
+        const categories = await EnterpriseCategory.findAll();
+        categories != undefined ? res.status(200).json(categories) : res.status(400).json({ message: "Erreur 400" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json("erreur 500");
+    }
+})
+
+
+app.get("/enterprisecategory/:id", async (req, res) => {
+    try {
+        const category = await EnterpriseCategory.findByPk(req.params.id);
+        category != undefined ? res.status(200).json(category) : res.status(400).json({ message: "Erreur 400" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json("Erreur 500");
+    }
+});
+
+
+app.post("/enterprisecategory", async (req, res) => {
+    const newCategory = req.body;
+    const category = await EnterpriseCategory.create({
+        title: newCategory.title
+    });
+    res.status(200).json(category.title + " a été ajouté à la liste des catégories d'entreprises'");
+});
+
+
+app.delete("/enterprisecategory/:id", async (req, res) => {
+    try {
+        const category = await EnterpriseCategory.findByPk(req.params.id);
+        const categoryDestroyed = category.dataValues;
+        await category.destroy();
+        category != undefined ? res.status(200).json({ message: "catégorie d'entreprise supprimée", data: categoryDestroyed }) : res.status(400).json({ message: "Erreur 400" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json("erreur 500");
+    }
+});
+
+
+app.put("/enterprisecategory", async (req, res) => {
+    try {
+        const modifiedCategory = req.body;
+
+        await EnterpriseCategory.update(modifiedCategory, {
+            where: {
+                id: modifiedCategory.id
+            }
+        });
+
+        // Recharger les données de la Catégorie mise à jour depuis la base de données
+        const updatedCategory = await EnterpriseCategory.findByPk(modifiedCategory.id);
+
+        updatedCategory != undefined ? res.status(200).json(updatedCategory) : res.status(400).json({ message: "Erreur lors de la modification" });
+    } catch (error) {
+        res.status(500).json({ message: "Erreur 500" });
+    }
+});
 
 
 app.listen(8051, () => {

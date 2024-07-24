@@ -7,7 +7,7 @@ const Enterprise = sequelize.define("Enterprise", {
     name: DataTypes.TEXT,
     address: DataTypes.TEXT,
     siret: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BIGINT,
         allowNull: false,
         unique: true
     }
