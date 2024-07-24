@@ -74,6 +74,26 @@ app.get("/products/search/:text", async (req, res) => {
         res.status(500).json({ message: "Erreur lors de la recherche des Produits." });
     }
 });
+app.post("/product", async (req, res) => {
+    const newProduct = req.body;
+    const product = {
+        name: newProduct.name,
+        price: newProduct.price,
+        description: newProduct.description,
+        isFavorite: newProduct.isFavorite,
+        stock: newProduct.stock,
+        EnterpriseId: newProduct.EnterpriseId,
+        ProductCategoryId: newProduct.ProductCategoryId
+    };
+    const productCategory = await ProductCategory.findByPk(newProduct.ProductCategoryId);
+    if (productCategory) {
+        await Product.create(product);
+        res.status(200).json(product.name + " a été ajouté à la liste des produits");
+    }
+    else {
+        res.status(400).json("catégorie inexistante");
+    }
+});
 app.listen(8051, () => {
     console.log("Youhouuuuu serveur lancé sur localhost:8051");
 });
