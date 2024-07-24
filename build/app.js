@@ -158,6 +158,45 @@ app.post("/enterprise", async (req, res) => {
         res.status(400).json("catégorie d'entreprise inexistante");
     }
 });
+// ROUTES POUR LES USERS :
+app.get("/users", async (req, res) => {
+    try {
+        const users = await User.findAll();
+        users.length > 0 ? res.status(200).json(users) : res.status(404).json({ message: "Aucun User" });
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Erreur lors de la recherche des users." });
+    }
+});
+app.get("/user/:id", async (req, res) => {
+    const user = await User.findByPk(req.params.id)
+        .catch((error) => res.status(500).json("Erreur 500"));
+    if (user) {
+        res.status(200).json(user);
+    }
+    else {
+        res.status(404).json({ message: "Aucun user trouvé avec cet id." });
+    }
+});
+app.post("/user/signup", async (req, res) => {
+    try {
+        const newUser = req.body;
+        const user = await User.create({
+            firstName: newUser.firstName,
+            lastName: newUser.lastName,
+            password: newUser.password,
+            email: newUser.email,
+            EnterpriseId: newUser.EnterpriseId,
+            RoleId: newUser.RoleId
+        });
+        user ? res.status(200).json("L'utilisateur " + newUser.firstName + " " + newUser.lastName + " a été ajouté(e) avec succès") : res.status(400).json("erreur saisie");
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json("erreur 500");
+    }
+});
 app.listen(8051, () => {
     console.log("Youhouuuuu serveur lancé sur localhost:8051");
 });

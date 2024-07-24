@@ -6,7 +6,7 @@ const saltRounds = 10;
 
 const User = sequelize.define("User", {
     firstName: DataTypes.TEXT,
-    lasttName: DataTypes.TEXT,
+    lastName: DataTypes.TEXT,
     password: {
         type: DataTypes.STRING,
         set(value) {

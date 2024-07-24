@@ -43,6 +43,8 @@ sequelize.sync({ force: true })
     const Enterprise = sequelize.models.Enterprise;
     const productCategory = sequelize.models.ProductCategory;
     const enterpriseCategory = sequelize.models.EnterpriseCategory;
+    const user = sequelize.models.User;
+    const role = sequelize.models.Role;
     const produits = await Product.bulkCreate([
         {
             name: "Peugeot 208 jaune",
@@ -83,6 +85,11 @@ sequelize.sync({ force: true })
         address: "13 boulevard Massinissa",
         siret: 492019394
     });
+    const stockEZ = await Enterprise.create({
+        name: "Stock'EZ",
+        address: "La Plateforme",
+        siret: 123456789
+    });
     const voitures = await productCategory.create({
         title: "Voitures"
     });
@@ -95,10 +102,23 @@ sequelize.sync({ force: true })
     const informatique = await enterpriseCategory.create({
         title: "Informatique"
     });
+    const jerem = await user.create({
+        firstName: "Jeremie",
+        lastName: "Laroche",
+        password: "Ricard4ever",
+        email: "j@jerem.fr"
+    });
+    const admin = await role.create({
+        name: "admin",
+        importance: 0
+    });
     await voitures.addProducts(produits);
     await ordinateurs.addProduct(produit);
     await logistique.addEnterprises(enterprises);
     await informatique.addEnterprise(enterprise);
+    await informatique.addEnterprise(stockEZ);
     await enterprises[0].addProducts(produits);
     await enterprise.addProduct(produit);
+    await admin.addUser(jerem);
+    await stockEZ.addUser(jerem);
 });

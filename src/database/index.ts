@@ -48,6 +48,8 @@ sequelize.sync({ force: true })
         const Enterprise = sequelize.models.Enterprise;
         const productCategory = sequelize.models.ProductCategory;
         const enterpriseCategory = sequelize.models.EnterpriseCategory;
+        const user = sequelize.models.User;
+        const role = sequelize.models.Role;
 
         const produits = await Product.bulkCreate([
             {
@@ -74,7 +76,7 @@ sequelize.sync({ force: true })
                 isFavorite: 1,
                 stock: 50
             }
-        )
+        );
 
         const enterprises = await Enterprise.bulkCreate([
             {
@@ -96,20 +98,39 @@ sequelize.sync({ force: true })
                 siret: 492019394
             });
 
+        const stockEZ = await Enterprise.create(
+            {
+                name: "Stock'EZ",
+                address: "La Plateforme",
+                siret: 123456789
+            });
+
         const voitures = await productCategory.create({
             title: "Voitures"
-        })
+        });
 
         const ordinateurs = await productCategory.create({
             title: "Ordinateurs"
-        })
+        });
 
         const logistique = await enterpriseCategory.create({
             title: "Logistique"
-        })
+        });
 
         const informatique = await enterpriseCategory.create({
             title: "Informatique"
+        });
+
+        const jerem = await user.create({
+            firstName: "Jeremie",
+            lastName: "Laroche",
+            password: "Ricard4ever",
+            email: "j@jerem.fr"
+        });
+
+        const admin = await role.create({
+            name: "admin",
+            importance: 0
         })
 
         await voitures.addProducts(produits);
@@ -117,7 +138,11 @@ sequelize.sync({ force: true })
 
         await logistique.addEnterprises(enterprises);
         await informatique.addEnterprise(enterprise);
+        await informatique.addEnterprise(stockEZ);
 
         await enterprises[0].addProducts(produits);
         await enterprise.addProduct(produit);
+
+        await admin.addUser(jerem);
+        await stockEZ.addUser(jerem);
     })
