@@ -18,5 +18,9 @@ const User = sequelize.define("User", {
     email: DataTypes.TEXT
 });
 Role.hasMany(User);
-User.belongsTo(Role);
+User.belongsTo(Role, {
+    foreignKey: {
+        defaultValue: 3
+    }
+});
 module.exports = User;

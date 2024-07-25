@@ -102,15 +102,23 @@ sequelize.sync({ force: true })
     const informatique = await enterpriseCategory.create({
         title: "Informatique"
     });
+    const admin = await role.create({
+        name: "admin",
+        importance: 0
+    });
+    const gestionnaire = await role.create({
+        name: "gestionnaire",
+        importance: 1
+    });
+    const employee = await role.create({
+        name: "employee",
+        importance: 2
+    });
     const jerem = await user.create({
         firstName: "Jeremie",
         lastName: "Laroche",
         password: "Ricard4ever",
         email: "j@jerem.fr"
-    });
-    const admin = await role.create({
-        name: "admin",
-        importance: 0
     });
     await voitures.addProducts(produits);
     await ordinateurs.addProduct(produit);

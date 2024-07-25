@@ -19,7 +19,11 @@ const User = sequelize.define("User", {
 
 
 Role.hasMany(User);
-User.belongsTo(Role);
+User.belongsTo(Role, {
+    foreignKey: {
+      defaultValue: 3
+    }
+});
 
 
 
