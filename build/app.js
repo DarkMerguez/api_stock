@@ -109,16 +109,17 @@ app.delete("/product/:id", async (req, res) => {
         res.status(500).json({ message: "Erreur 500" });
     }
 });
-app.put("/product", async (req, res) => {
+app.put("/product/:id", async (req, res) => {
     try {
         const modifiedProduct = req.body;
         await Product.update(modifiedProduct, {
             where: {
-                id: modifiedProduct.id
+                id: req.params.id
             }
         });
         // Recharger les données du Produit mis à jour depuis la base de données
-        const updatedProduct = await Product.findByPk(modifiedProduct.id);
+        const updatedProduct = await Product.findByPk(req.params.id);
+        console.log(updatedProduct);
         modifiedProduct ? res.status(200).json(updatedProduct) : res.status(400).json({ message: "Erreur lors de la modification" });
     }
     catch (error) {
@@ -204,16 +205,17 @@ app.delete("/enterprise/:id", async (req, res) => {
         res.status(500).json({ message: "Erreur 500" });
     }
 });
-app.put("/enterprise", async (req, res) => {
+app.put("/enterprise/:id", async (req, res) => {
     try {
         const modifiedEnterprise = req.body;
         await Enterprise.update(modifiedEnterprise, {
             where: {
-                id: modifiedEnterprise.id
+                id: req.params.id
             }
         });
         // Recharger les données de l'entreprise mise à jour depuis la base de données
-        const updatedEnterprise = await Enterprise.findByPk(modifiedEnterprise.id);
+        const updatedEnterprise = await Enterprise.findByPk(req.params.id);
+        console.log(updatedEnterprise);
         modifiedEnterprise ? res.status(200).json(updatedEnterprise) : res.status(400).json({ message: "Erreur lors de la modification" });
     }
     catch (error) {
@@ -259,6 +261,35 @@ app.post("/user/signup", async (req, res) => {
         res.status(500).json("erreur 500");
     }
 });
+app.delete("/user/:id", async (req, res) => {
+    try {
+        const user = await User.findByPk(req.params.id);
+        const userDestroyed = user.dataValues;
+        await user.destroy();
+        user != undefined ? res.status(200).json({ message: "utilisateur supprimé", data: userDestroyed }) : res.status(400).json({ message: "Erreur 400" });
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json("erreur 500");
+    }
+});
+app.put("/user/:id", async (req, res) => {
+    try {
+        const modifiedUser = req.body;
+        await User.update(modifiedUser, {
+            where: {
+                id: req.params.id
+            }
+        });
+        // Recharger les données de l'utilisateur mis à jour depuis la base de données
+        const updatedUser = await User.findByPk(req.params.id);
+        console.log(updatedUser);
+        modifiedUser ? res.status(200).json(updatedUser) : res.status(400).json({ message: "Erreur lors de la modification" });
+    }
+    catch (error) {
+        res.status(500).json({ message: "Erreur lors de la modification de l'utilisateur." });
+    }
+});
 // ROUTES PRODUCTCATEGORIES :
 app.get("/productcategories", async (req, res) => {
     try {
@@ -299,20 +330,21 @@ app.delete("/productcategory/:id", async (req, res) => {
         res.status(500).json("erreur 500");
     }
 });
-app.put("/productcategory", async (req, res) => {
+app.put("/productcategory/:id", async (req, res) => {
     try {
         const modifiedCategory = req.body;
         await ProductCategory.update(modifiedCategory, {
             where: {
-                id: modifiedCategory.id
+                id: req.params.id
             }
         });
-        // Recharger les données de la Catégorie mise à jour depuis la base de données
-        const updatedCategory = await ProductCategory.findByPk(modifiedCategory.id);
-        updatedCategory != undefined ? res.status(200).json(updatedCategory) : res.status(400).json({ message: "Erreur lors de la modification" });
+        // Recharger les données de la Category mise à jour depuis la base de données
+        const updatedCategory = await ProductCategory.findByPk(req.params.id);
+        console.log(updatedCategory);
+        modifiedCategory ? res.status(200).json(updatedCategory) : res.status(400).json({ message: "Erreur lors de la modification" });
     }
     catch (error) {
-        res.status(500).json({ message: "Erreur 500" });
+        res.status(500).json({ message: "Erreur lors de la modification de la catégorie." });
     }
 });
 // ROUTES ENTERPRISECATEGORIES :
@@ -355,20 +387,21 @@ app.delete("/enterprisecategory/:id", async (req, res) => {
         res.status(500).json("erreur 500");
     }
 });
-app.put("/enterprisecategory", async (req, res) => {
+app.put("/enterprisecategory/:id", async (req, res) => {
     try {
         const modifiedCategory = req.body;
         await EnterpriseCategory.update(modifiedCategory, {
             where: {
-                id: modifiedCategory.id
+                id: req.params.id
             }
         });
-        // Recharger les données de la Catégorie mise à jour depuis la base de données
-        const updatedCategory = await EnterpriseCategory.findByPk(modifiedCategory.id);
-        updatedCategory != undefined ? res.status(200).json(updatedCategory) : res.status(400).json({ message: "Erreur lors de la modification" });
+        // Recharger les données de la Category mise à jour depuis la base de données
+        const updatedCategory = await EnterpriseCategory.findByPk(req.params.id);
+        console.log(updatedCategory);
+        modifiedCategory ? res.status(200).json(updatedCategory) : res.status(400).json({ message: "Erreur lors de la modification" });
     }
     catch (error) {
-        res.status(500).json({ message: "Erreur 500" });
+        res.status(500).json({ message: "Erreur lors de la modification de la catégorie." });
     }
 });
 app.listen(8051, () => {

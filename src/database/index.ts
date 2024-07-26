@@ -144,6 +144,13 @@ sequelize.sync({ force: true })
             email: "j@jerem.fr"
         });
 
+        const massi = await user.create({
+            firstName: "Massinissa",
+            lastName: "Chaouchi",
+            password: "ToulouseRPZ4ever",
+            email: "mass@mass.fr"
+        })
+
         await voitures.addProducts(produits);
         await ordinateurs.addProduct(produit);
 
