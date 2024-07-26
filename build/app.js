@@ -283,7 +283,6 @@ app.put("/user/:id", async (req, res) => {
         });
         // Recharger les données de l'utilisateur mis à jour depuis la base de données
         const updatedUser = await User.findByPk(req.params.id);
-        console.log(updatedUser);
         modifiedUser ? res.status(200).json(updatedUser) : res.status(400).json({ message: "Erreur lors de la modification" });
     }
     catch (error) {
@@ -340,7 +339,6 @@ app.put("/productcategory/:id", async (req, res) => {
         });
         // Recharger les données de la Category mise à jour depuis la base de données
         const updatedCategory = await ProductCategory.findByPk(req.params.id);
-        console.log(updatedCategory);
         modifiedCategory ? res.status(200).json(updatedCategory) : res.status(400).json({ message: "Erreur lors de la modification" });
     }
     catch (error) {
@@ -397,7 +395,6 @@ app.put("/enterprisecategory/:id", async (req, res) => {
         });
         // Recharger les données de la Category mise à jour depuis la base de données
         const updatedCategory = await EnterpriseCategory.findByPk(req.params.id);
-        console.log(updatedCategory);
         modifiedCategory ? res.status(200).json(updatedCategory) : res.status(400).json({ message: "Erreur lors de la modification" });
     }
     catch (error) {
