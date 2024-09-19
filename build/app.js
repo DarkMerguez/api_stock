@@ -409,47 +409,30 @@ app.put("/enterprisecategory/:id", async (req, res) => {
 //Gérer l'upload de fichiers :
 app.post("/upload", async (req, res) => {
     try {
-        // Vérifier si un fichier a été envoyé
-        if (!req.files || !req.files.image) {
-            return res.status(400).json({ msg: "No image sent by the client" });
+        // Vérifier si des fichiers ont été envoyés
+        if (!req.files || !req.files.images) {
+            return res.status(400).json({ msg: "No images sent by the client" });
         }
-        const image = req.files.image;
+        const images = req.files.images;
         const allowedExtensions = /jpg|jpeg|png|gif/;
-        // Vérifier si le fichier est bien une image (par extension)
-        const extensionFile = path.extname(image.name).toLowerCase();
-        if (!allowedExtensions.test(extensionFile)) {
-            return res.status(400).json({ msg: "Invalid image format. Only JPG, PNG, and GIF are allowed." });
-        }
-        // Former un nom unique pour le fichier
-        const fileName = path.basename(image.name, extensionFile);
-        const completeFileName = `${fileName}_${Date.now()}${extensionFile}`;
-        // Uploader le fichier dans le dossier /public
-        const uploadPath = path.join(__dirname, 'public', completeFileName);
-        image.mv(uploadPath, async (err) => {
-            if (err) {
-                console.error(err);
-                return res.status(500).json({ msg: "Error while uploading the file" });
+        const uploadedImages = [];
+        for (const image of images) {
+            const extensionFile = path.extname(image.name).toLowerCase();
+            if (!allowedExtensions.test(extensionFile)) {
+                return res.status(400).json({ msg: "Invalid image format. Only JPG, PNG, and GIF are allowed." });
             }
-            // Sauvegarder l'URL de l'image dans la table Images
+            const fileName = path.basename(image.name, extensionFile);
+            const completeFileName = `${fileName}_${Date.now()}${extensionFile}`;
+            const uploadPath = path.join(__dirname, 'public', completeFileName);
+            await image.mv(uploadPath);
             const newImage = await Image.create({
                 url: `http://localhost:8051/${completeFileName}`
             });
-            // Si l'image est associée à un utilisateur ou à une entreprise, on peut l'associer ici.
-            // Par exemple, pour un User (en supposant que req.body.userId soit fourni) :
-            /*
-            const userId = req.body.userId; // Id du User envoyé avec la requête
-            if (userId) {
-                const user = await User.findByPk(userId);
-                if (user) {
-                    await user.setImage(newImage); // Associer l'image à l'utilisateur
-                }
-            }
-            */
-            res.status(200).json({
-                msg: 'Image uploaded and saved in database',
-                imageId: newImage.id, // Ajoutez cette ligne pour renvoyer l'ID
-                imageUrl: newImage.url
-            });
+            uploadedImages.push(newImage);
+        }
+        res.status(200).json({
+            msg: 'Images uploaded and saved in database',
+            images: uploadedImages
         });
     }
     catch (error) {
