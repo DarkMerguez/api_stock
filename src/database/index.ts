@@ -158,8 +158,8 @@ sequelize.sync({ force: true })
         await informatique.addEnterprise(enterprise);
         await informatique.addEnterprise(stockEZ);
 
-        await enterprises[0].addProducts(produits);
-        await enterprise.addProduct(produit);
+/*         await enterprises[0].addProducts(produits);
+        await enterprise.addProduct(produit); */
 
         await admin.addUser(jerem);
         await stockEZ.addUser(jerem);

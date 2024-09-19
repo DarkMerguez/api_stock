@@ -13,6 +13,6 @@ const Product = sequelize.define("Product", {
 });
 ProductCategory.hasMany(Product);
 Product.belongsTo(ProductCategory);
-Enterprise.hasMany(Product);
-Product.belongsTo(Enterprise);
+/* Enterprise.hasMany(Product);
+Product.belongsTo(Enterprise);  */
 module.exports = Product;

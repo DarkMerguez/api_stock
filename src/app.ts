@@ -25,12 +25,16 @@ const { Op } = require("sequelize");
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const fileUpload = require("express-fileupload");
+const path = require('path');
 
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
 app.use(express.json());
 app.use(cors());
+app.use(express.static("public"));
+app.use(fileUpload());
 
 
 
@@ -104,14 +108,15 @@ app.post("/product", async (req, res) => {
         EnterpriseId: newProduct.EnterpriseId,
         ProductCategoryId: newProduct.ProductCategoryId
     };
-    const productCategory = await ProductCategory.findByPk(newProduct.ProductCategoryId)
-    if (productCategory) {
-        await Product.create(product)
-        res.status(200).json(product.name + " a été ajouté à la liste des produits");
-    }
-    else { res.status(400).json("catégorie inexistante") }
-});
 
+    const productCategory = await ProductCategory.findByPk(newProduct.ProductCategoryId);
+    if (productCategory) {
+        const createdProduct = await Product.create(product);
+        res.status(200).json(createdProduct); // Retourne l'objet complet
+    } else {
+        res.status(400).json("catégorie inexistante");
+    }
+});
 
 
 app.delete("/product/:id", async (req, res) => {
@@ -474,6 +479,91 @@ app.put("/enterprisecategory/:id", async (req, res) => {
     }
 });
 
+
+// ROUTES IMAGES :
+
+//Gérer l'upload de fichiers :
+
+app.post("/upload", async (req, res) => {
+    try {
+        // Vérifier si un fichier a été envoyé
+        if (!req.files || !req.files.image) {
+            return res.status(400).json({ msg: "No image sent by the client" });
+        }
+
+        const image = req.files.image;
+        const allowedExtensions = /jpg|jpeg|png|gif/;
+
+        // Vérifier si le fichier est bien une image (par extension)
+        const extensionFile = path.extname(image.name).toLowerCase();
+        if (!allowedExtensions.test(extensionFile)) {
+            return res.status(400).json({ msg: "Invalid image format. Only JPG, PNG, and GIF are allowed." });
+        }
+
+        // Former un nom unique pour le fichier
+        const fileName = path.basename(image.name, extensionFile);
+        const completeFileName = `${fileName}_${Date.now()}${extensionFile}`;
+
+        // Uploader le fichier dans le dossier /public
+        const uploadPath = path.join(__dirname, 'public', completeFileName);
+        image.mv(uploadPath, async (err) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({ msg: "Error while uploading the file" });
+            }
+
+            // Sauvegarder l'URL de l'image dans la table Images
+            const newImage = await Image.create({
+                url: `http://localhost:8051/${completeFileName}`
+            });
+
+            // Si l'image est associée à un utilisateur ou à une entreprise, on peut l'associer ici.
+            // Par exemple, pour un User (en supposant que req.body.userId soit fourni) :
+            /*
+            const userId = req.body.userId; // Id du User envoyé avec la requête
+            if (userId) {
+                const user = await User.findByPk(userId);
+                if (user) {
+                    await user.setImage(newImage); // Associer l'image à l'utilisateur
+                }
+            }
+            */
+
+            res.status(200).json({
+                msg: 'Image uploaded and saved in database',
+                imageId: newImage.id, // Ajoutez cette ligne pour renvoyer l'ID
+                imageUrl: newImage.url
+            });
+        });
+    } catch (error) {
+        res.status(500).json({ msg: "An error occurred", error });
+    }
+});
+
+app.post("/image", async (req,res) => {
+    const image = req.body;
+    try {
+        await Image.create(image);
+        res.status(200).json({ msg: "Image ajoutée avec succès" });
+    } catch (error) {
+        res.status(500).json({ msg: "Erreur lors de l'ajout d'image" });
+    }
+})
+
+
+app.post("/productImages", async (req, res) => {
+    const { ProductId, ImageId } = req.body;
+
+    console.log("Received ProductId:", ProductId);
+    console.log("Received ImageId:", ImageId);
+
+    try {
+        await ProductImage.create({ ProductId, ImageId });
+        res.status(200).json({ msg: "Association produit-image réussie" });
+    } catch (error) {
+        res.status(500).json({ msg: "Erreur lors de l'association produit-image", error });
+    }
+});
 
 app.listen(8051, () => {
     console.log("Youhouuuuu serveur lancé sur localhost:8051");
