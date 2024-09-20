@@ -1,6 +1,5 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../database");
-const Role = require("./Role");
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
@@ -11,21 +10,20 @@ const User = sequelize.define("User", {
         type: DataTypes.STRING,
         set(value) {
             const hash = bcrypt.hashSync(value, saltRounds);
-            this.setDataValue("password", hash)
+            this.setDataValue("password", hash);
         },
     },
-    email: DataTypes.TEXT
+    email: {
+        type: DataTypes.STRING,
+        unique: true,
+        allowNull: false, // Garantir qu'un email soit fourni
+    },
+    role: {
+        type: DataTypes.ENUM('Admin', 'Gestionnaire', 'Employee'),
+        allowNull: false,
+        defaultValue: 'Employee', // Valeur par défaut
+    },
 });
-
-
-Role.hasMany(User);
-User.belongsTo(Role, {
-    foreignKey: {
-      defaultValue: 3
-    }
-});
-
-
 
 
 module.exports = User;

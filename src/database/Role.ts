@@ -1,4 +1,4 @@
-import { defaultValueSchemable } from "sequelize/lib/utils";
+/* import { defaultValueSchemable } from "sequelize/lib/utils";
 
 const { DataTypes } = require("sequelize");
 const sequelize = require("../database");
@@ -14,4 +14,4 @@ const Role = sequelize.define("Role", {
 
 
 
-module.exports = Role;
+module.exports = Role; */

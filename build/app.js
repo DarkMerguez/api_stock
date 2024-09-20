@@ -1,4 +1,7 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 // Models :
 const { ProductCategory } = require("./database");
@@ -30,6 +33,55 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static("public"));
 app.use(fileUpload());
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+const secretKey = process.env.JWT_SECRET;
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const body_parser_1 = __importDefault(require("body-parser"));
+app.use(body_parser_1.default.json());
+// Middleware pour vérifier le JWT
+const checkJwt = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader)
+        return res.status(401).json({ message: 'No token provided' });
+    const token = authHeader.split(' ')[1]; // Extraire le token (sans le mot 'Bearer')
+    jsonwebtoken_1.default.verify(token, secretKey, (err, decoded) => {
+        if (err)
+            return res.status(401).json({ message: 'Unauthorized' });
+        req.body.user = decoded; // Stocker le contenu du token dans la requête
+        next();
+    });
+};
+// Route de login pour générer un token JWT
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body; // Assurez-vous d'utiliser le bon champ pour l'email
+    try {
+        // Rechercher l'utilisateur par email
+        const user = await User.findOne({ where: { email } });
+        // Vérifier si l'utilisateur existe
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid email' });
+        }
+        // Comparer le mot de passe fourni avec le hachage stocké
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: 'Invalid password' });
+        }
+        // Créer un payload JWT
+        const payload = { email: user.email, role: user.role }; // Adaptez selon votre modèle
+        // Générer le token
+        const token = jsonwebtoken_1.default.sign(payload, secretKey, { expiresIn: '1d' });
+        res.json({ token });
+    }
+    catch (error) {
+        console.error('Error during login', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+// Route protégée par JWT
+app.get('/protected', checkJwt, (req, res) => {
+    res.json({ message: 'You are authorized', user: req.body.user });
+});
 // ROUTES DE PRODUIT :
 app.get("/products", async (req, res) => {
     try {

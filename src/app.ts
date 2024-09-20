@@ -36,6 +36,65 @@ app.use(cors());
 app.use(express.static("public"));
 app.use(fileUpload());
 
+import dotenv from 'dotenv';
+dotenv.config();
+
+const secretKey = process.env.JWT_SECRET;
+
+import express, { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import bodyParser from 'body-parser';
+
+app.use(bodyParser.json());
+
+// Middleware pour vérifier le JWT
+const checkJwt = (req: Request, res: Response, next: NextFunction) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+
+    const token = authHeader.split(' ')[1]; // Extraire le token (sans le mot 'Bearer')
+    jwt.verify(token, secretKey, (err, decoded) => {
+        if (err) return res.status(401).json({ message: 'Unauthorized' });
+        req.body.user = decoded; // Stocker le contenu du token dans la requête
+        next();
+    });
+};
+
+// Route de login pour générer un token JWT
+app.post('/login', async (req: Request, res: Response) => {
+    const { email, password } = req.body; // Assurez-vous d'utiliser le bon champ pour l'email
+
+    try {
+        // Rechercher l'utilisateur par email
+        const user = await User.findOne({ where: { email } });
+
+        // Vérifier si l'utilisateur existe
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid email' });
+        }
+
+        // Comparer le mot de passe fourni avec le hachage stocké
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: 'Invalid password' });
+        }
+
+        // Créer un payload JWT
+        const payload = { email: user.email, role: user.role }; // Adaptez selon votre modèle
+
+        // Générer le token
+        const token = jwt.sign(payload, secretKey, { expiresIn: '1d' });
+        res.json({ token });
+    } catch (error) {
+        console.error('Error during login', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// Route protégée par JWT
+app.get('/protected', checkJwt, (req: Request, res: Response) => {
+    res.json({ message: 'You are authorized', user: req.body.user });
+});
 
 
 // ROUTES DE PRODUIT :

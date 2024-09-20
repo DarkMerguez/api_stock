@@ -44,6 +44,7 @@ sequelize.sync({ force: true })
     .then(async () => {
         console.log("Les modèles et les tables sont synchronisés.");
 
+
         const Product = sequelize.models.Product;
         const Enterprise = sequelize.models.Enterprise;
         const productCategory = sequelize.models.ProductCategory;
@@ -122,7 +123,7 @@ sequelize.sync({ force: true })
         });
 
 
-        const admin = await role.create({
+/*         const admin = await role.create({
             name: "admin",
             importance: 0
         });
@@ -130,25 +131,32 @@ sequelize.sync({ force: true })
         const gestionnaire = await role.create({
             name: "gestionnaire",
             importance: 1
-        })
+        });
 
         const employee = await role.create({
             name: "employee",
             importance: 2
-        })
+        });
 
+        const visitor = await role.create({
+            name: "visitor",
+            importance: 3
+        });
+ */
         const jerem = await user.create({
             firstName: "Jeremie",
             lastName: "Laroche",
             password: "Ricard4ever",
-            email: "j@jerem.fr"
+            email: "j@jerem.fr",
+            role: "Admin"
         });
 
         const massi = await user.create({
             firstName: "Massinissa",
             lastName: "Chaouchi",
             password: "ToulouseRPZ4ever",
-            email: "mass@mass.fr"
+            email: "mass@mass.fr",
+            role: "Gestionnaire"
         })
 
         await voitures.addProducts(produits);
@@ -161,6 +169,6 @@ sequelize.sync({ force: true })
 /*         await enterprises[0].addProducts(produits);
         await enterprise.addProduct(produit); */
 
-        await admin.addUser(jerem);
+        /* await admin.addUser(jerem); */
         await stockEZ.addUser(jerem);
     })
