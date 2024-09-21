@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const { DataTypes } = require("sequelize");
 const sequelize = require("../database");
+// const Image  = require("./Image");
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const User = sequelize.define("User", {
@@ -23,6 +24,6 @@ const User = sequelize.define("User", {
         type: DataTypes.ENUM('Admin', 'Gestionnaire', 'Employee'),
         allowNull: false,
         defaultValue: 'Employee', // Valeur par défaut
-    },
+    }
 });
 module.exports = User;

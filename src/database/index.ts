@@ -50,7 +50,7 @@ sequelize.sync({ force: true })
         const productCategory = sequelize.models.ProductCategory;
         const enterpriseCategory = sequelize.models.EnterpriseCategory;
         const user = sequelize.models.User;
-        const role = sequelize.models.Role;
+        const image = sequelize.models.Image;
 
         const produits = await Product.bulkCreate([
             {
@@ -158,6 +158,20 @@ sequelize.sync({ force: true })
             email: "mass@mass.fr",
             role: "Gestionnaire"
         })
+
+
+        // Définir un avatar par défaut :
+        const defaultImage = await image.findOrCreate({
+            where: { url: 'https://assets.codepen.io/1480814/av+1.png' },
+            defaults: { url: 'https://assets.codepen.io/1480814/av+1.png' }
+          });
+        
+          // Mets à jour tous les utilisateurs qui n'ont pas encore d'image associée
+          await user.update({ ImageId: defaultImage[0].id }, {
+            where: {
+              ImageId: null
+            }
+          });
 
         await voitures.addProducts(produits);
         await ordinateurs.addProduct(produit);
