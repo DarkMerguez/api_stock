@@ -80,7 +80,7 @@ app.post('/login', async (req: Request, res: Response) => {
         }
 
         // Créer un payload JWT
-        const payload = { email: user.email, role: user.role }; // Adaptez selon votre modèle
+        const payload = { email: user.email, role: user.role, id: user.id, ImageId: user.ImageId }; // Adaptez selon votre modèle
 
         // Générer le token
         const token = jwt.sign(payload, secretKey, { expiresIn: '1d' });
@@ -237,7 +237,7 @@ app.get("/enterprise/:id", async (req, res) => {
     if (enterprise) {
         res.status(200).json(enterprise);
     } else {
-        res.status(404).json({ message: "Aucune entreprise trouvé avec cet id." });
+        res.status(404).json({ message: "Aucune entreprise trouvée avec cet id." });
     }
 });
 
@@ -545,44 +545,55 @@ app.put("/enterprisecategory/:id", async (req, res) => {
 
 app.post("/upload", async (req, res) => {
     try {
-      // Vérifier si des fichiers ont été envoyés
-      if (!req.files || !req.files.images) {
-        return res.status(400).json({ msg: "No images sent by the client" });
-      }
-  
-      const images = req.files.images;
-      const allowedExtensions = /jpg|jpeg|png|gif/;
-      const uploadedImages = [];
-  
-      for (const image of images) {
-        const extensionFile = path.extname(image.name).toLowerCase();
-        if (!allowedExtensions.test(extensionFile)) {
-          return res.status(400).json({ msg: "Invalid image format. Only JPG, PNG, and GIF are allowed." });
+        // Vérifier si des fichiers ont été envoyés
+        if (!req.files || !req.files.images) {
+            return res.status(400).json({ msg: "No images sent by the client" });
         }
-  
-        const fileName = path.basename(image.name, extensionFile);
-        const completeFileName = `${fileName}_${Date.now()}${extensionFile}`;
-        const uploadPath = path.join(__dirname, 'public', completeFileName);
-  
-        await image.mv(uploadPath);
-  
-        const newImage = await Image.create({
-          url: `http://localhost:8051/${completeFileName}`
-        });
-  
-        uploadedImages.push(newImage);
-      }
-  
-      res.status(200).json({
-        msg: 'Images uploaded and saved in database',
-        images: uploadedImages
-      });
-    } catch (error) {
-      res.status(500).json({ msg: "An error occurred", error });
-    }
-  });
 
-app.post("/image", async (req,res) => {
+        const images = req.files.images;
+        const allowedExtensions = /jpg|jpeg|png|gif/;
+        const uploadedImages = [];
+
+        for (const image of images) {
+            const extensionFile = path.extname(image.name).toLowerCase();
+            if (!allowedExtensions.test(extensionFile)) {
+                return res.status(400).json({ msg: "Invalid image format. Only JPG, PNG, and GIF are allowed." });
+            }
+
+            const fileName = path.basename(image.name, extensionFile);
+            const completeFileName = `${fileName}_${Date.now()}${extensionFile}`;
+            const uploadPath = path.join(__dirname, 'public', completeFileName);
+
+            await image.mv(uploadPath);
+
+            const newImage = await Image.create({
+                url: `http://localhost:8051/${completeFileName}`
+            });
+
+            uploadedImages.push(newImage);
+        }
+
+        res.status(200).json({
+            msg: 'Images uploaded and saved in database',
+            images: uploadedImages
+        });
+    } catch (error) {
+        res.status(500).json({ msg: "An error occurred", error });
+    }
+});
+
+
+app.get("/image/:id", async (req, res) => {
+    const image = await Image.findByPk(req.params.id)
+        .catch((error) => res.status(500).json("Erreur 500"));
+    if (image) {
+        res.status(200).json(image);
+    } else {
+        res.status(404).json({ message: "Aucune image trouvée avec cet id." });
+    }
+});
+
+app.post("/image", async (req, res) => {
     const image = req.body;
     try {
         await Image.create(image);

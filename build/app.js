@@ -68,7 +68,7 @@ app.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid password' });
         }
         // Créer un payload JWT
-        const payload = { email: user.email, role: user.role }; // Adaptez selon votre modèle
+        const payload = { email: user.email, role: user.role, id: user.id, ImageId: user.ImageId }; // Adaptez selon votre modèle
         // Générer le token
         const token = jsonwebtoken_1.default.sign(payload, secretKey, { expiresIn: '1d' });
         res.json({ token });
@@ -200,7 +200,7 @@ app.get("/enterprise/:id", async (req, res) => {
         res.status(200).json(enterprise);
     }
     else {
-        res.status(404).json({ message: "Aucune entreprise trouvé avec cet id." });
+        res.status(404).json({ message: "Aucune entreprise trouvée avec cet id." });
     }
 });
 app.get("/enterprises/search/:text", async (req, res) => {
@@ -489,6 +489,16 @@ app.post("/upload", async (req, res) => {
     }
     catch (error) {
         res.status(500).json({ msg: "An error occurred", error });
+    }
+});
+app.get("/image/:id", async (req, res) => {
+    const image = await Image.findByPk(req.params.id)
+        .catch((error) => res.status(500).json("Erreur 500"));
+    if (image) {
+        res.status(200).json(image);
+    }
+    else {
+        res.status(404).json({ message: "Aucune image trouvée avec cet id." });
     }
 });
 app.post("/image", async (req, res) => {
