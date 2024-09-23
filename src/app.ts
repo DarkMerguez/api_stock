@@ -96,6 +96,21 @@ app.get('/protected', checkJwt, (req: Request, res: Response) => {
     res.json({ message: 'You are authorized', user: req.body.user });
 });
 
+// Récupérer un utilisateur grâce au token :
+export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) return res.status(401).json({ msg: "No token provided" });
+
+    jwt.verify(token, process.env.JWT_SECRET as string, (err: any, user: any) => {
+        if (err) return res.status(403).json({ msg: "Invalid token" });
+
+        req.user = user;  // Ajouter l'utilisateur au requête pour l'utiliser plus tard
+        next();
+    });
+};
+
 
 // ROUTES DE PRODUIT :
 
@@ -271,20 +286,44 @@ app.get("/enterprises/search/:text", async (req, res) => {
 });
 
 app.post("/enterprise", async (req, res) => {
-    const newEnterprise = req.body;
-    const enterprise = {
-        name: newEnterprise.name,
-        address: newEnterprise.address,
-        siret: newEnterprise.siret,
-        EnterpriseCategoryId: newEnterprise.EnterpriseCategoryId,
-        ImageId: newEnterprise.ImageId
-    };
-    const enterpriseCategory = await EnterpriseCategory.findByPk(newEnterprise.EnterpriseCategoryId)
-    if (enterpriseCategory) {
-        await Enterprise.create(enterprise)
-        res.status(200).json(enterprise.name + " a été ajoutée à la liste des entreprises");
+    try {
+        // Vérifiez le token JWT
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(403).json({ msg: "Token non fourni" });
+        }
+
+        const decoded = jwt.verify(token, secretKey);
+        const userId = decoded.id; // Récupérer l'ID de l'utilisateur
+
+        const newEnterprise = req.body;
+        const enterprise = {
+            name: newEnterprise.name,
+            address: newEnterprise.address,
+            siret: newEnterprise.siret,
+            EnterpriseCategoryId: newEnterprise.EnterpriseCategoryId,
+            ImageId: newEnterprise.ImageId
+        };
+
+        const enterpriseCategory = await EnterpriseCategory.findByPk(newEnterprise.EnterpriseCategoryId);
+        if (!enterpriseCategory) {
+            return res.status(400).json("Catégorie d'entreprise inexistante");
+        }
+
+        // Ajouter l'entreprise
+        const createdEnterprise = await Enterprise.create(enterprise);
+
+        // Mettre à jour l'utilisateur pour ajouter l'EnterpriseId
+        await User.update(
+            { EnterpriseId: createdEnterprise.id },
+            { where: { id: userId } }
+        );
+
+        res.status(200).json(`${createdEnterprise.name} a été ajoutée à la liste des entreprises`);
+    } catch (error) {
+        console.error('Erreur lors de l\'ajout de l\'entreprise:', error);
+        res.status(500).json({ msg: "Erreur lors de l'ajout de l'entreprise", error });
     }
-    else { res.status(400).json("catégorie d'entreprise inexistante") }
 });
 
 
@@ -577,6 +616,46 @@ app.post("/upload", async (req, res) => {
         res.status(200).json({
             msg: 'Images uploaded and saved in database',
             images: uploadedImages
+        });
+    } catch (error) {
+        res.status(500).json({ msg: "An error occurred", error });
+    }
+});
+
+// Upload une seule image :
+app.post("/upload-single", async (req, res) => {
+    try {
+        // Vérifier si un fichier a été envoyé
+        if (!req.files || !req.files.image) {
+            return res.status(400).json({ msg: "No image sent by the client" });
+        }
+
+        const image = req.files.image;
+        const allowedExtensions = /jpg|jpeg|png|gif/;
+        const extensionFile = path.extname(image.name).toLowerCase();
+
+        // Vérifier l'extension du fichier
+        if (!allowedExtensions.test(extensionFile)) {
+            return res.status(400).json({ msg: "Invalid image format. Only JPG, PNG, and GIF are allowed." });
+        }
+
+        // Créer un nom de fichier unique
+        const fileName = path.basename(image.name, extensionFile);
+        const completeFileName = `${fileName}_${Date.now()}${extensionFile}`;
+        const uploadPath = path.join(__dirname, 'public', completeFileName);
+
+        // Déplacer l'image vers le dossier 'public'
+        await image.mv(uploadPath);
+
+        // Enregistrer l'image dans la base de données
+        const newImage = await Image.create({
+            url: `http://localhost:8051/${completeFileName}`
+        });
+
+        // Répondre avec les détails de l'image
+        res.status(200).json({
+            msg: 'Image uploaded and saved in database',
+            image: newImage
         });
     } catch (error) {
         res.status(500).json({ msg: "An error occurred", error });
