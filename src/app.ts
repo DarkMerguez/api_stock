@@ -361,8 +361,9 @@ app.post("/user/signup", async (req, res) => {
             lastName: newUser.lastName,
             password: newUser.password,
             email: newUser.email,
+            role: newUser.role,
             EnterpriseId: newUser.EnterpriseId,
-            RoleId: newUser.RoleId
+            ImageId: 1
         });
         user ? res.status(200).json("L'utilisateur " + newUser.firstName + " " + newUser.lastName + " a été ajouté(e) avec succès") : res.status(400).json("erreur saisie");
     } catch (error) {
