@@ -183,18 +183,48 @@ app.delete("/product/:id", async (req, res) => {
 app.put("/product/:id", async (req, res) => {
     try {
         const modifiedProduct = req.body;
+        // Mettre à jour les informations du produit
         await Product.update(modifiedProduct, {
-            where: {
-                id: req.params.id
-            }
+            where: { id: req.params.id }
         });
-        // Recharger les données du Produit mis à jour depuis la base de données
-        const updatedProduct = await Product.findByPk(req.params.id);
-        console.log(updatedProduct);
-        modifiedProduct ? res.status(200).json(updatedProduct) : res.status(400).json({ message: "Erreur lors de la modification" });
+        // Gérer la suppression des images
+        if (req.body.imagesToDelete) {
+            const imagesToDelete = JSON.parse(req.body.imagesToDelete);
+            for (const imageId of imagesToDelete) {
+                await ProductImage.destroy({
+                    where: {
+                        ProductId: req.params.id,
+                        ImageId: imageId
+                    }
+                });
+            }
+        }
+        // Gérer l'ajout de nouvelles images
+        if (req.files && req.files.images) {
+            const images = req.files.images;
+            for (const image of images) {
+                // Définir le chemin où l'image doit être sauvegardée
+                const uploadPath = path.join(__dirname, 'public', image.name);
+                // Déplacer l'image vers le répertoire public
+                await image.mv(uploadPath);
+                // Créer une nouvelle entrée dans la table Images
+                const newImage = await Image.create({
+                    url: `http://localhost:8051/${image.name}`, // Assurez-vous que le chemin est correct ici
+                    // Autres champs nécessaires pour l'image...
+                });
+                // Ajouter l'association à la table ProductImage
+                await ProductImage.create({
+                    ProductId: req.params.id,
+                    ImageId: newImage.id // Utilisez l'ID de la nouvelle image
+                });
+            }
+        }
+        // Récupérer le produit mis à jour avec les images
+        const updatedProduct = await Product.findByPk(req.params.id, { include: [{ model: Image, as: 'Images' }] });
+        res.status(200).json(updatedProduct);
     }
     catch (error) {
-        res.status(500).json({ message: "Erreur lors de la modification du Produit." });
+        res.status(500).json({ message: "Erreur lors de la modification du produit.", error });
     }
 });
 // ROUTES POUR LES ENTREPRISES :
@@ -565,6 +595,32 @@ app.get("/image/:id", async (req, res) => {
         res.status(404).json({ message: "Aucune image trouvée avec cet id." });
     }
 });
+// Route pour obtenir les images d'un produit par son ID
+app.get('/products/:id/images', async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Recherche du produit par son ID et inclusion des images associées
+        const product = await Product.findByPk(id, {
+            include: [{
+                    model: Image,
+                    as: 'Images', // Utilisation de l'alias pour l'association
+                    through: { attributes: [] } // On ne récupère pas les colonnes de la table de jointure
+                }]
+        });
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        // Retour des images associées
+        res.json(product.Images);
+    }
+    catch (error) {
+        console.error('An error occurred while fetching product images:', error);
+        res.status(500).json({
+            message: 'An error occurred while fetching product images',
+            error: error.message
+        });
+    }
+});
 app.post("/image", async (req, res) => {
     const image = req.body;
     try {
@@ -579,12 +635,31 @@ app.post("/productImages", async (req, res) => {
     const { ProductId, ImageId } = req.body;
     console.log("Received ProductId:", ProductId);
     console.log("Received ImageId:", ImageId);
+    // Vérification des IDs
+    if (!ProductId || !ImageId) {
+        return res.status(400).json({ msg: "ProductId et ImageId sont requis" });
+    }
     try {
         await ProductImage.create({ ProductId, ImageId });
         res.status(200).json({ msg: "Association produit-image réussie" });
     }
     catch (error) {
         res.status(500).json({ msg: "Erreur lors de l'association produit-image", error });
+    }
+});
+// Route pour supprimer une image par son ID
+app.delete('/images/:imageId', async (req, res) => {
+    const { imageId } = req.params;
+    try {
+        const image = await Image.findByPk(imageId);
+        if (!image) {
+            return res.status(404).json({ message: 'Image not found' });
+        }
+        await image.destroy();
+        res.json({ message: 'Image deleted successfully' });
+    }
+    catch (error) {
+        res.status(500).json({ message: 'An error occurred while deleting the image', error });
     }
 });
 app.listen(8051, () => {
