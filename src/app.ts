@@ -168,24 +168,29 @@ app.get("/products/search/:text", async (req, res) => {
     }
 });
 
-app.post("/product", async (req, res) => {
-    const newProduct = req.body;
-    const product = {
-        name: newProduct.name,
-        price: newProduct.price,
-        description: newProduct.description,
-        isFavorite: newProduct.isFavorite,
-        stock: newProduct.stock,
-        EnterpriseId: newProduct.EnterpriseId,
-        ProductCategoryId: newProduct.ProductCategoryId
-    };
+app.post('/product', authenticateToken, async (req, res) => {
+    const userId = req.user.id;  // Récupérer l'id de l'utilisateur depuis le token JWT
+    const user = await User.findByPk(userId, { include: Enterprise });
 
-    const productCategory = await ProductCategory.findByPk(newProduct.ProductCategoryId);
-    if (productCategory) {
-        const createdProduct = await Product.create(product);
-        res.status(200).json(createdProduct); // Retourne l'objet complet
-    } else {
-        res.status(400).json("catégorie inexistante");
+    if (!user || !user.EnterpriseId) {
+        return res.status(400).json({ message: 'L\'utilisateur n\'a pas d\'entreprise associée.' });
+    }
+
+    const { name, price, description, stock, isFavorite, ProductCategoryId } = req.body;
+
+    try {
+        const product = await Product.create({
+            name,
+            price,
+            description,
+            stock,
+            isFavorite,
+            ProductCategoryId,
+            EnterpriseId: user.EnterpriseId  // Associer directement l'EnterpriseId récupéré
+        });
+        res.json(product);
+    } catch (error) {
+        res.status(500).json({ message: 'Erreur lors de la création du produit.' });
     }
 });
 

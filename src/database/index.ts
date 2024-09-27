@@ -123,26 +123,6 @@ sequelize.sync({ force: true })
         });
 
 
-/*         const admin = await role.create({
-            name: "admin",
-            importance: 0
-        });
-
-        const gestionnaire = await role.create({
-            name: "gestionnaire",
-            importance: 1
-        });
-
-        const employee = await role.create({
-            name: "employee",
-            importance: 2
-        });
-
-        const visitor = await role.create({
-            name: "visitor",
-            importance: 3
-        });
- */
         const jerem = await user.create({
             firstName: "Jeremie",
             lastName: "Laroche",
@@ -166,7 +146,7 @@ sequelize.sync({ force: true })
             defaults: { url: 'https://assets.codepen.io/1480814/av+1.png' }
           });
         
-          // Mets à jour tous les utilisateurs qui n'ont pas encore d'image associée
+          // Met à jour tous les utilisateurs qui n'ont pas encore d'image associée
           await user.update({ ImageId: defaultImage[0].id }, {
             where: {
               ImageId: null
@@ -180,9 +160,9 @@ sequelize.sync({ force: true })
         await informatique.addEnterprise(enterprise);
         await informatique.addEnterprise(stockEZ);
 
-/*         await enterprises[0].addProducts(produits);
-        await enterprise.addProduct(produit); */
+        await enterprises[0].addProducts(produits);
+        await enterprise.addProduct(produit);
 
-        /* await admin.addUser(jerem); */
+
         await stockEZ.addUser(jerem);
     })
