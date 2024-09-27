@@ -109,13 +109,38 @@ app.get("/products", async (req, res) => {
     }
 });
 app.get("/product/:id", async (req, res) => {
-    const product = await Product.findByPk(req.params.id)
-        .catch((error) => res.status(500).json("Erreur 500"));
-    if (product) {
-        res.status(200).json(product);
+    try {
+        const product = await Product.findByPk(req.params.id)
+            .catch((error) => res.status(500).json("Erreur 500"));
+        if (product) {
+            res.status(200).json(product);
+        }
+        else {
+            res.status(404).json({ message: "Aucun Produit trouvé avec cet id." });
+        }
     }
-    else {
-        res.status(404).json({ message: "Aucun Produit trouvé avec cet id." });
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Erreur lors de la recherche des Produits." });
+    }
+});
+app.get("/products/category/:productCategoryId", async (req, res) => {
+    try {
+        const products = await Product.findAll({
+            where: {
+                ProductCategoryId: req.params.productCategoryId
+            }
+        });
+        if (products) {
+            res.status(200).json(products);
+        }
+        else {
+            res.status(404).json({ message: "Aucun Produit trouvé avec cette categoryId." });
+        }
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Erreur lors de la recherche des Produits." });
     }
 });
 app.get("/products/search/:text", async (req, res) => {
