@@ -52,117 +52,130 @@ sequelize.sync({ force: true })
         const user = sequelize.models.User;
         const image = sequelize.models.Image;
 
-        const produits = await Product.bulkCreate([
-            {
-                name: "Peugeot 208 jaune",
-                price: 2000,
-                description: "Voiture de la Poste",
-                isFavorite: 1,
-                stock: 10
-            },
-            {
-                name: "Renault Partner jaune",
-                price: 10000,
-                description: "Camion de livraison des colis",
-                isFavorite: 0,
-                stock: 1000
-            }
+        const entreprises = await Enterprise.bulkCreate([
+            { name: "La Poste", address: "12 rue du Courrier", siret: 987654321 },
+            { name: "Tech Valley", address: "24 Avenue des Startups", siret: 123987456 },
+            { name: "Mobilité Durable", address: "56 rue des Voitures Electriques", siret: 321654987 },
+            { name: "InnoTech", address: "107 rue de l'Innovation", siret: 654321789 },
+            { name: "Eco Solutions", address: "203 Allée Verte", siret: 789456123 }
         ]);
 
-        const produit = await Product.create(
-            {
-                name: "PC gaming Asus",
-                price: 3000,
-                description: "Si ta mère te l'achète tu seras vraiment bien",
-                isFavorite: 1,
-                stock: 50
-            }
-        );
-
-        const enterprises = await Enterprise.bulkCreate([
-            {
-                name: "La Poste",
-                address: "12 rue du 22 Fevrier 1993",
-                siret: 2222222
-            },
-            {
-                name: "Stock'tout",
-                address: "1075 Avenue du Maréchal Laroche",
-                siret: 22021993
-            }
+        const produits1 = await Product.bulkCreate([
+            { name: "Peugeot 308", price: 15000, description: "Voiture compacte", isFavorite: 0, stock: 30, EnterpriseId: entreprises[0].id },
+            { name: "Tesla Model 3", price: 50000, description: "Voiture électrique", isFavorite: 1, stock: 15, EnterpriseId: entreprises[0].id },
+            { name: "Ford Mustang", price: 45000, description: "Voiture sportive", isFavorite: 1, stock: 5, EnterpriseId: entreprises[0].id },
+            { name: "Fiat Panda", price: 8000, description: "Petite citadine", isFavorite: 0, stock: 100, EnterpriseId: entreprises[0].id },
+            { name: "BMW Série 5", price: 60000, description: "Berline de luxe", isFavorite: 1, stock: 8, EnterpriseId: entreprises[0].id },
+            { name: "Audi A4", price: 35000, description: "Berline sportive", isFavorite: 0, stock: 20, EnterpriseId: entreprises[0].id },
+            { name: "Mercedes Classe A", price: 32000, description: "Compacte premium", isFavorite: 1, stock: 12, EnterpriseId: entreprises[0].id },
+            { name: "Renault Clio", price: 12000, description: "Best-seller en France", isFavorite: 1, stock: 50, EnterpriseId: entreprises[0].id },
+            { name: "Nissan Leaf", price: 30000, description: "Compacte électrique", isFavorite: 0, stock: 25, EnterpriseId: entreprises[0].id },
+            { name: "Porsche 911", price: 90000, description: "Voiture de sport", isFavorite: 1, stock: 3, EnterpriseId: entreprises[0].id }
         ]);
 
-        const enterprise = await Enterprise.create(
-            {
-                name: "Tech'83",
-                address: "13 boulevard Massinissa",
-                siret: 492019394
-            });
+        const produits2 = await Product.bulkCreate([
+            { name: "Dell XPS 13", price: 1500, description: "Ultrabook compact", isFavorite: 1, stock: 50, EnterpriseId: entreprises[1].id },
+            { name: "MacBook Pro 14", price: 2500, description: "Laptop puissant", isFavorite: 1, stock: 30, EnterpriseId: entreprises[1].id },
+            { name: "Asus Zenbook", price: 1200, description: "Ultraportable performant", isFavorite: 0, stock: 40, EnterpriseId: entreprises[1].id },
+            { name: "HP Spectre x360", price: 1400, description: "Laptop convertible", isFavorite: 0, stock: 20, EnterpriseId: entreprises[1].id },
+            { name: "Acer Nitro 5", price: 1100, description: "PC gaming abordable", isFavorite: 1, stock: 35, EnterpriseId: entreprises[1].id },
+            { name: "Lenovo ThinkPad", price: 1800, description: "Laptop professionnel", isFavorite: 0, stock: 25, EnterpriseId: entreprises[1].id },
+            { name: "MSI GS65 Stealth", price: 2000, description: "Laptop gaming premium", isFavorite: 1, stock: 15, EnterpriseId: entreprises[1].id },
+            { name: "Razer Blade", price: 2400, description: "Laptop gaming ultra fin", isFavorite: 1, stock: 10, EnterpriseId: entreprises[1].id },
+            { name: "Microsoft Surface Laptop", price: 1500, description: "Laptop pour étudiants", isFavorite: 1, stock: 60, EnterpriseId: entreprises[1].id },
+            { name: "Google Pixelbook", price: 1300, description: "Chromebook haut de gamme", isFavorite: 0, stock: 50, EnterpriseId: entreprises[1].id }
+        ]);
 
-        const stockEZ = await Enterprise.create(
-            {
-                name: "Stock'EZ",
-                address: "La Plateforme",
-                siret: 123456789
-            });
+        const produits3 = await Product.bulkCreate([
+            { name: "Samsung Galaxy S22", price: 900, description: "Smartphone haut de gamme", isFavorite: 1, stock: 100, EnterpriseId: entreprises[2].id },
+            { name: "iPhone 14", price: 1200, description: "Dernier modèle Apple", isFavorite: 1, stock: 75, EnterpriseId: entreprises[2].id },
+            { name: "OnePlus 9 Pro", price: 850, description: "Flagship killer", isFavorite: 0, stock: 50, EnterpriseId: entreprises[2].id },
+            { name: "Google Pixel 7", price: 800, description: "Smartphone Android pur", isFavorite: 1, stock: 60, EnterpriseId: entreprises[2].id },
+            { name: "Xiaomi Mi 11", price: 700, description: "Smartphone abordable et puissant", isFavorite: 0, stock: 150, EnterpriseId: entreprises[2].id },
+            { name: "Huawei P40 Pro", price: 1000, description: "Photophone exceptionnel", isFavorite: 1, stock: 30, EnterpriseId: entreprises[2].id },
+            { name: "Oppo Find X5", price: 950, description: "Smartphone design et performant", isFavorite: 1, stock: 40, EnterpriseId: entreprises[2].id },
+            { name: "Sony Xperia 5 II", price: 800, description: "Smartphone multimédia", isFavorite: 0, stock: 20, EnterpriseId: entreprises[2].id },
+            { name: "Nokia 8.3", price: 650, description: "Smartphone 5G", isFavorite: 0, stock: 80, EnterpriseId: entreprises[2].id },
+            { name: "Motorola Edge", price: 750, description: "Smartphone avec écran incurvé", isFavorite: 1, stock: 30, EnterpriseId: entreprises[2].id }
+        ]);
 
-        const voitures = await productCategory.create({
-            title: "Voitures"
-        });
+        const produits4 = await Product.bulkCreate([
+            { name: "Apple iMac", price: 2000, description: "Ordinateur de bureau", isFavorite: 1, stock: 20, EnterpriseId: entreprises[3].id },
+            { name: "Dell Inspiron", price: 1200, description: "PC de bureau", isFavorite: 1, stock: 30, EnterpriseId: entreprises[3].id },
+            { name: "HP Omen", price: 1500, description: "PC gamer", isFavorite: 1, stock: 15, EnterpriseId: entreprises[3].id },
+            { name: "Lenovo IdeaCentre", price: 1000, description: "PC tout-en-un", isFavorite: 1, stock: 25, EnterpriseId: entreprises[3].id },
+            { name: "Asus ROG", price: 2500, description: "PC gaming", isFavorite: 1, stock: 10, EnterpriseId: entreprises[3].id },
+            { name: "Acer Aspire", price: 900, description: "PC polyvalent", isFavorite: 1, stock: 35, EnterpriseId: entreprises[3].id },
+            { name: "Microsoft Surface Studio", price: 3000, description: "PC créatif", isFavorite: 1, stock: 5, EnterpriseId: entreprises[3].id },
+            { name: "Razer Blade Stealth", price: 2200, description: "Ultrabook gaming", isFavorite: 1, stock: 10, EnterpriseId: entreprises[3].id },
+            { name: "Samsung Galaxy Book", price: 1300, description: "Laptop léger", isFavorite: 1, stock: 20, EnterpriseId: entreprises[3].id },
+            { name: "HP Elite Dragonfly", price: 1800, description: "Ultraportable professionnel", isFavorite: 1, stock: 15, EnterpriseId: entreprises[3].id }
+        ]);
 
-        const ordinateurs = await productCategory.create({
-            title: "Ordinateurs"
-        });
+        const produits5 = await Product.bulkCreate([
+            { name: "Smart TV LG", price: 1200, description: "Télévision 4K", isFavorite: 1, stock: 25, EnterpriseId: entreprises[4].id },
+            { name: "Sony Bravia", price: 1500, description: "Télévision OLED", isFavorite: 1, stock: 20, EnterpriseId: entreprises[4].id },
+            { name: "Samsung QLED", price: 1300, description: "Télévision haut de gamme", isFavorite: 1, stock: 30, EnterpriseId: entreprises[4].id },
+            { name: "Philips Ambilight", price: 1100, description: "Télévision immersive", isFavorite: 1, stock: 15, EnterpriseId: entreprises[4].id },
+            { name: "TCL 6 Series", price: 900, description: "Télévision abordable", isFavorite: 1, stock: 50, EnterpriseId: entreprises[4].id },
+            { name: "LG NanoCell", price: 1400, description: "Télévision de haute qualité", isFavorite: 1, stock: 20, EnterpriseId: entreprises[4].id },
+            { name: "Vizio M-Series", price: 800, description: "Télévision avec son surround", isFavorite: 1, stock: 35, EnterpriseId: entreprises[4].id },
+            { name: "Roku Smart TV", price: 750, description: "Télévision intelligente", isFavorite: 1, stock: 45, EnterpriseId: entreprises[4].id },
+            { name: "Hisense 4K", price: 700, description: "Télévision 4K économique", isFavorite: 1, stock: 60, EnterpriseId: entreprises[4].id },
+            { name: "Sanyo LED", price: 600, description: "Télévision LED de base", isFavorite: 1, stock: 80, EnterpriseId: entreprises[4].id }
+        ]);
 
-        const logistique = await enterpriseCategory.create({
-            title: "Logistique"
-        });
+        const categoriesProduits = await productCategory.bulkCreate([
+            { title: "Automobile" },
+            { title: "Informatique" },
+            { title: "Télécommunications" },
+            { title: "Audiovisuel" }
+        ]);
 
-        const informatique = await enterpriseCategory.create({
-            title: "Informatique"
-        });
+        const categoriesEntreprises = await enterpriseCategory.bulkCreate([
+            { title: "Logistique" },
+            { title: "Technologie" },
+            { title: "Mobilité" },
+            { title: "Énergies Vertes" }
+        ]);
 
+        const users = await user.bulkCreate([
+            { firstName: "Jeremie", lastName: "Laroche", password: "Ricard4ever", email: "j@jerem.fr", role: "Admin" },
+            { firstName: "Alice", lastName: "Dupont", password: "abcdef", email: "alice@example.com", role: "Gestionnaire" },
+            { firstName: "Paul", lastName: "Martin", password: "pass123", email: "paul@example.com", role: "Employee" },
+            { firstName: "Sara", lastName: "Dubois", password: "mypassword", email: "sara@example.com", role: "Gestionnaire" },
+            { firstName: "Louis", lastName: "Bernard", password: "louispass", email: "louis@example.com", role: "Employee" }
+        ]);
 
-        const jerem = await user.create({
-            firstName: "Jeremie",
-            lastName: "Laroche",
-            password: "Ricard4ever",
-            email: "j@jerem.fr",
-            role: "Admin"
-        });
-
-        const massi = await user.create({
-            firstName: "Massinissa",
-            lastName: "Chaouchi",
-            password: "ToulouseRPZ4ever",
-            email: "mass@mass.fr",
-            role: "Gestionnaire"
-        })
-
-
-        // Définir un avatar par défaut :
+        // Définir un avatar par défaut
         const defaultImage = await image.findOrCreate({
             where: { url: 'https://assets.codepen.io/1480814/av+1.png' },
             defaults: { url: 'https://assets.codepen.io/1480814/av+1.png' }
-          });
-        
-          // Met à jour tous les utilisateurs qui n'ont pas encore d'image associée
-          await user.update({ ImageId: defaultImage[0].id }, {
+        });
+
+        // Met à jour tous les utilisateurs qui n'ont pas encore d'image associée
+        await user.update({ ImageId: defaultImage[0].id }, {
             where: {
-              ImageId: null
+                ImageId: null
             }
-          });
+        });
 
-        await voitures.addProducts(produits);
-        await ordinateurs.addProduct(produit);
+        // Lien produits et entreprises avec les catégories
+        await categoriesProduits[0].addProducts(produits1); // Automobile
+        await categoriesProduits[1].addProducts(produits2); // Informatique
+        await categoriesProduits[2].addProducts(produits3); // Télécommunications
+        await categoriesProduits[1].addProducts(produits4); // Informatique
+        await categoriesProduits[3].addProducts(produits5); // Audiovisuel
 
-        await logistique.addEnterprises(enterprises);
-        await informatique.addEnterprise(enterprise);
-        await informatique.addEnterprise(stockEZ);
+        await categoriesEntreprises[0].addEnterprises([entreprises[0]]); // La Poste - Logistique
+        await categoriesEntreprises[1].addEnterprises([entreprises[1], entreprises[3]]); // Tech Valley & InnoTech - Technologie
+        await categoriesEntreprises[2].addEnterprises([entreprises[2]]); // Mobilité Durable - Mobilité
+        await categoriesEntreprises[3].addEnterprises([entreprises[4]]); // Eco Solutions - Énergies Vertes
 
-        await enterprises[0].addProducts(produits);
-        await enterprise.addProduct(produit);
-
-
-        await stockEZ.addUser(jerem);
+        // Lier utilisateurs à leurs entreprises
+        await entreprises[0].addUser(users[0]); // Jeremie - La Poste
+        await entreprises[1].addUser(users[1]); // Alice - Tech Valley
+        await entreprises[2].addUser(users[2]); // Paul - Mobilité Durable
+        await entreprises[3].addUser(users[3]); // Sara - InnoTech
+        await entreprises[4].addUser(users[4]); // Louis - Eco Solutions
     })
