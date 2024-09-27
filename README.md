@@ -1,9 +1,10 @@
-```mermaid
+```
+mermaid
 ---
-title : Diagramme MCDUML
+title: Diagramme MCDUML
 ---
 erDiagram
-    Product{
+    Product {
         id INT
         name TEXT
         price FLOAT
@@ -13,28 +14,33 @@ erDiagram
         enterpriseId INT
         productCategoryId INT
     }
-        ProductCart["ProductCart(join)"]{
+
+    ProductCart {
         id INT
         quantity INT
         productId INT
         cartId INT
     }
-    Carac{
+
+    Carac {
         id INT
         name TEXT
         unit TEXT
     }
-    CaracProduct["CaracProduct(join)"]{
+
+    CaracProduct {
         id INT
         value INT
         caracId INT
         productId INT
     }
-    Cart{
+
+    Cart {
         id INT
         enterpriseId INT
     }
-    User{
+
+    User {
         id INT
         firstName TEXT
         lastName TEXT
@@ -44,29 +50,29 @@ erDiagram
         enterpriseID INT
         roleId INT
     }
-    Images{
+
+    Images {
         id INT
         url TEXT
     }
-    ProductImages["ProductImages(join)"]{
+
+    ProductImages {
         id INT
         productId INT
         imageId INT
-}
-    Role{
-        id INT
-        name TEXT
-        importance INT
     }
-    ProductCategory{
+
+    ProductCategory {
         id INT
         title TEXT
     }
-    EnterpriseCategory{
+
+    EnterpriseCategory {
         id INT
         title TEXT
     }
-    Enterprise{
+
+    Enterprise {
         id INT
         name TEXT
         address TEXT
@@ -74,64 +80,63 @@ erDiagram
         enterpriseCategoryId INT
         imagesId INT
     }
-    Bill{
+
+    Bill {
         id INT
         sellerId INT
         buyerId INT
         orderId INT
     }
-    Order{
+
+    Order {
         id INT
         status INT
         sellerId INT
         buyerId INT
     }
-    BillProduct["BillProduct(join)"]{
+
+    BillProduct {
         id INT
         billId INT
         productId INT
     }
-    OrderProduct["OrderProduct(join)"]{
+
+    OrderProduct {
         id INT
         orderId INT
         productId INT
     }
-  
 
-    
-    Product ||--|{ ProductImages : has
-    Images ||--|{ ProductImages : has
-    
-    Product ||--|{ CaracProduct : has
-    Carac ||--|{ CaracProduct : has
-    
-    Product ||--|{ ProductCart : has
-    Cart ||--|{ ProductCart : has
+    Product ||--|{ ProductImages : "includes"
+    Images ||--|{ ProductImages : "represents"
 
-    Product ||--|{ BillProduct : has
-    Bill ||--|{ BillProduct : has
+    Product ||--|{ CaracProduct : "has"
+    Carac ||--|{ CaracProduct : "defines"
 
-    Product }|--|| ProductCategory : has
-    Product ||--|{ OrderProduct : has
-    Order ||--|{ OrderProduct : has
+    Product ||--|{ ProductCart : "contains"
+    Cart ||--|{ ProductCart : "holds"
 
+    Product ||--|{ BillProduct : "bills"
+    Bill ||--|{ BillProduct : "details"
 
-    User ||--|| Images : has
+    Product }|--|| ProductCategory : "belongs_to"
+    Product ||--|{ OrderProduct : "orders"
+    Order ||--|{ OrderProduct : "contains"
 
-    User }|--|| Role : has
+    User ||--|| Images : "has"
 
-    Order ||--|| Bill : has
-    Enterprise }|--|| EnterpriseCategory : has
+    Order ||--|| Bill : "generates"
+    Enterprise }|--|| EnterpriseCategory : "classified_as"
 
-    Enterprise ||--|| Cart : has
+    Enterprise ||--|| Cart : "manages"
 
-    Enterprise ||--|{ Product : has
+    Enterprise ||--|{ Product : "offers"
 
-    Enterprise ||--|| Images : has
+    Enterprise ||--|| Images : "stores"
 
-    Enterprise ||--|{ User : has
+    Enterprise ||--|{ User : "employs"
 
-    Enterprise ||--|{ Bill : has
+    Enterprise ||--|{ Bill : "generates"
 
-    Enterprise ||--|{ Order : has
+    Enterprise ||--|{ Order : "processes"
 ```

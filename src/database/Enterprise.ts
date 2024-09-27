@@ -18,3 +18,5 @@ User.belongsTo(Enterprise);
 
 
 module.exports = Enterprise;
+
+

@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const { Sequelize, DataTypes, Op } = require("sequelize");
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
+const { Sequelize, DataTypes, Op } = require("sequelize");
 const login = {
     database: "gestion_stock",
     username: "admin",

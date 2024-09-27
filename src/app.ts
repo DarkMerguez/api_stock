@@ -16,20 +16,17 @@ const { Enterprise } = require("./database");
 const { Order } = require("./database");
 const { OrderProduct } = require("./database");
 
-
-
 const sequelize = require("./database");
 const { Op } = require("sequelize");
-
 
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const fileUpload = require("express-fileupload");
-const path = require('path');
 
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
+const fileUpload = require("express-fileupload");
+const path = require('path');
 
 app.use(express.json());
 app.use(cors());
@@ -60,9 +57,14 @@ const checkJwt = (req: Request, res: Response, next: NextFunction) => {
     });
 };
 
+// Route protégée par JWT
+app.get('/protected', checkJwt, (req: Request, res: Response) => {
+    res.json({ message: 'You are authorized', user: req.body.user });
+});
+
 // Route de login pour générer un token JWT
 app.post('/login', async (req: Request, res: Response) => {
-    const { email, password } = req.body; // Assurez-vous d'utiliser le bon champ pour l'email
+    const { email, password } = req.body;
 
     try {
         // Rechercher l'utilisateur par email
@@ -80,7 +82,7 @@ app.post('/login', async (req: Request, res: Response) => {
         }
 
         // Créer un payload JWT
-        const payload = { email: user.email, role: user.role, id: user.id, ImageId: user.ImageId }; // Adaptez selon votre modèle
+        const payload = { email: user.email, role: user.role, id: user.id, ImageId: user.ImageId };
 
         // Générer le token
         const token = jwt.sign(payload, secretKey, { expiresIn: '1d' });
@@ -89,11 +91,6 @@ app.post('/login', async (req: Request, res: Response) => {
         console.error('Error during login', error);
         res.status(500).json({ message: 'Internal server error' });
     }
-});
-
-// Route protégée par JWT
-app.get('/protected', checkJwt, (req: Request, res: Response) => {
-    res.json({ message: 'You are authorized', user: req.body.user });
 });
 
 // Récupérer un utilisateur grâce au token :
@@ -320,9 +317,9 @@ app.get("/enterprises/search/:text", async (req, res) => {
     }
 });
 
-app.post("/enterprise", async (req, res) => {
+app.post("/enterprise", checkJwt, async (req, res) => {
     try {
-        // Vérifiez le token JWT
+        // Vérifier le token JWT
         const token = req.headers.authorization?.split(' ')[1];
         if (!token) {
             return res.status(403).json({ msg: "Token non fourni" });
@@ -340,6 +337,7 @@ app.post("/enterprise", async (req, res) => {
             ImageId: newEnterprise.ImageId
         };
 
+        // Vérifier si la catégorie d'entreprise existe dans la BDD
         const enterpriseCategory = await EnterpriseCategory.findByPk(newEnterprise.EnterpriseCategoryId);
         if (!enterpriseCategory) {
             return res.status(400).json("Catégorie d'entreprise inexistante");
@@ -507,11 +505,16 @@ app.get("/productcategory/:id", async (req, res) => {
 
 
 app.post("/productcategory", async (req, res) => {
-    const newCategory = req.body;
-    const category = await ProductCategory.create({
-        title: newCategory.title
-    });
-    res.status(200).json(category.title + " a été ajouté à la liste des catégories de produits");
+    try {
+        const newCategory = req.body;
+        const category = await ProductCategory.create({
+            title: newCategory.title
+        });
+        res.status(200).json(category.title + " a été ajouté à la liste des catégories de produits");
+    } catch (error) {
+        console.log(error);
+        res.status(500).json("Erreur 500");
+    }
 });
 
 
