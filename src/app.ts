@@ -52,7 +52,7 @@ const checkJwt = (req: Request, res: Response, next: NextFunction) => {
     const token = authHeader.split(' ')[1]; // Extraire le token (sans le mot 'Bearer')
     jwt.verify(token, secretKey, (err, decoded) => {
         if (err) return res.status(401).json({ message: 'Unauthorized' });
-        req.body.user = decoded; // Stocker le contenu du token dans la requête
+        req.user = decoded; 
         next();
     });
 };
@@ -319,29 +319,36 @@ app.put("/product/:id", async (req, res) => {
 });
 
 //ajouter un produit au panier :
-app.post('/cart', async (req, res) => {
-  const { productId, quantity } = req.body;
+app.post('/cart', checkJwt, async (req, res) => {
+    const { productId, quantity } = req.body;
 
+    try {
+        const enterpriseId = req.user.EnterpriseId;  // Récupérer l'EnterpriseId du token JWT
 
-  try {
-    const cart = await Cart.findOne({ where: { EnterpriseId: req.user.EnterpriseId } });
-    const product = await Product.findByPk(productId);
+        if (!enterpriseId) {
+            return res.status(400).json({ message: 'No enterprise associated with this user' });
+        }
 
-    if (!cart || !product) {
-      return res.status(404).json({ message: 'Cart or product not found' });
+        // Chercher le panier lié à l'entreprise de l'utilisateur
+        let cart = await Cart.findOne({ where: { EnterpriseId: enterpriseId } });
+
+        // Si aucun panier n'est trouvé, en créer un nouveau
+        if (!cart) {
+            cart = await Cart.create({ EnterpriseId: enterpriseId });
+        }
+
+        // Ajouter le produit au panier via la table de jointure ProductCart
+        await ProductCart.create({
+            CartId: cart.id,
+            ProductId: productId,
+            quantity
+        });
+
+        res.status(200).json({ message: 'Product added to cart' });
+    } catch (error) {
+        console.error('Error adding product to cart:', error);
+        res.status(500).json({ message: 'Error adding product to cart', error });
     }
-
-    await ProductCart.create({
-      CartId: cart.id,
-      ProductId: product.id,
-      quantity
-    });
-
-    res.status(200).json({ message: 'Product added to cart' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error adding product to cart', error });
-    console.log(error);
-  }
 });
 
 
@@ -966,6 +973,25 @@ app.get("/search/:text", async (req, res) => {
         res.status(500).json({ message: "Erreur lors de la recherche." });
     }
 });
+
+
+// ROUTES PANIER :
+
+app.get("/cart/:enterpriseId", async (req,res) => {
+    try {
+        const cart = await Cart.findOne({ where: { EnterpriseId: req.params.enterpriseId }});
+
+        if (!cart) {
+            return res.status(404).json({ message: 'Cart not found' });
+        } else {
+            res.status(200).json(cart);
+        }
+
+    } catch(error) {
+        console.log(error);
+        res.status(500).json({ message: "Erreur lors de la recherche." });
+    }
+})
 
 
 app.listen(8051, () => {

@@ -4,6 +4,16 @@ const Enterprise = require("./Enterprise");
 
 const Cart = sequelize.define("Cart", {
 
+    isPaid: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+    },
+    totalPrice: {
+        type: DataTypes.FLOAT,
+        allowNull: false,
+        defaultValue: 0,
+    }
 })
 
 
