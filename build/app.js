@@ -30,6 +30,7 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const fileUpload = require("express-fileupload");
 const path = require('path');
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 app.use(express.json());
 app.use(cors());
 app.use(express.static("public"));
@@ -283,7 +284,7 @@ app.put("/product/:id", async (req, res) => {
         res.status(500).json({ message: "Erreur lors de la modification du produit.", error });
     }
 });
-//ajouter un produit au panier :
+// Ajouter un produit au panier :
 app.post('/cart', checkJwt, async (req, res) => {
     const { productId, quantity } = req.body;
     try {
@@ -296,6 +297,10 @@ app.post('/cart', checkJwt, async (req, res) => {
         // Si aucun panier n'est trouvé, en créer un nouveau
         if (!cart) {
             cart = await Cart.create({ EnterpriseId: enterpriseId });
+        }
+        // Si le panier est marqué comme payé, réinitialiser isPaid à false
+        if (cart.isPaid) {
+            await Cart.update({ isPaid: false }, { where: { id: cart.id } });
         }
         // Ajouter le produit au panier via la table de jointure ProductCart
         await ProductCart.create({
@@ -847,6 +852,72 @@ app.get("/cart/:enterpriseId", async (req, res) => {
     catch (error) {
         console.log(error);
         res.status(500).json({ message: "Erreur lors de la recherche." });
+    }
+});
+// ROUTES PAIEMENT :
+app.post('/create-checkout-session', async (req, res) => {
+    const { cartId } = req.body; // Assurez-vous que cartId est envoyé depuis le frontend
+    // Récupérer les produits du panier
+    const productCartItems = await ProductCart.findAll({
+        where: { CartId: cartId },
+        include: [Product]
+    });
+    // Calculer le prix total du panier
+    let totalPrice = 0;
+    productCartItems.forEach(item => {
+        totalPrice += item.quantity * item.Product.price;
+    });
+    // Mettre à jour le prix total dans la table Cart
+    await Cart.update({ totalPrice }, { where: { id: cartId } });
+    // Créer des éléments de ligne pour Stripe à partir des produits du panier
+    const lineItems = productCartItems.map(item => ({
+        price_data: {
+            currency: 'eur',
+            product_data: {
+                name: item.Product.name,
+            },
+            unit_amount: Math.round(item.Product.price * 100), // Stripe travaille en centimes
+        },
+        quantity: item.quantity,
+    }));
+    // Créer la session de paiement avec Stripe, en incluant CartId dans les métadonnées
+    const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: lineItems,
+        mode: 'payment',
+        metadata: {
+            cartId: cartId // Inclure CartId dans les métadonnées
+        },
+        success_url: `http://localhost:4200/success`,
+        cancel_url: `http://localhost:4200/cancel`,
+    });
+    res.json({ id: session.id });
+});
+app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    let event;
+    try {
+        // Construction de l'événement Stripe
+        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    }
+    catch (err) {
+        res.status(400).send(`Webhook Error: ${err.message}`);
+        return;
+    }
+    // Vérifier si le paiement a été complété
+    if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        // Récupérer le CartId depuis les métadonnées
+        const cartId = session.metadata.cartId;
+        // Marquer le panier comme payé
+        await Cart.update({ isPaid: true }, { where: { id: cartId } });
+        // Supprimer les lignes de ProductCart pour vider le panier
+        await ProductCart.destroy({ where: { CartId: cartId } });
+        // Envoyer une réponse de succès à Stripe
+        res.status(200).send('Success');
+    }
+    else {
+        res.status(400).send(`Unhandled event type ${event.type}`);
     }
 });
 app.listen(8051, () => {

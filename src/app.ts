@@ -28,6 +28,8 @@ const saltRounds = 10;
 const fileUpload = require("express-fileupload");
 const path = require('path');
 
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 app.use(express.json());
 app.use(cors());
 app.use(express.static("public"));
@@ -52,7 +54,7 @@ const checkJwt = (req: Request, res: Response, next: NextFunction) => {
     const token = authHeader.split(' ')[1]; // Extraire le token (sans le mot 'Bearer')
     jwt.verify(token, secretKey, (err, decoded) => {
         if (err) return res.status(401).json({ message: 'Unauthorized' });
-        req.user = decoded; 
+        req.user = decoded;
         next();
     });
 };
@@ -82,11 +84,11 @@ app.post('/login', async (req: Request, res: Response) => {
         }
 
         // Créer un payload JWT
-        let payload: any = { 
-            email: user.email, 
-            role: user.role, 
-            id: user.id, 
-            ImageId: user.ImageId 
+        let payload: any = {
+            email: user.email,
+            role: user.role,
+            id: user.id,
+            ImageId: user.ImageId
         };
 
         // Ajouter l'EnterpriseId s'il existe
@@ -157,7 +159,7 @@ app.get("/products/category/:productCategoryId", async (req, res) => {
     try {
         const products = await Product.findAll({
             where: {
-                ProductCategoryId : req.params.productCategoryId
+                ProductCategoryId: req.params.productCategoryId
             }
         })
         if (products) {
@@ -175,7 +177,7 @@ app.get("/products/enterprise/:enterpriseId", async (req, res) => {
     try {
         const products = await Product.findAll({
             where: {
-                EnterpriseId : req.params.enterpriseId
+                EnterpriseId: req.params.enterpriseId
             }
         })
         if (products) {
@@ -318,7 +320,7 @@ app.put("/product/:id", async (req, res) => {
     }
 });
 
-//ajouter un produit au panier :
+// Ajouter un produit au panier :
 app.post('/cart', checkJwt, async (req, res) => {
     const { productId, quantity } = req.body;
 
@@ -337,6 +339,11 @@ app.post('/cart', checkJwt, async (req, res) => {
             cart = await Cart.create({ EnterpriseId: enterpriseId });
         }
 
+        // Si le panier est marqué comme payé, réinitialiser isPaid à false
+        if (cart.isPaid) {
+            await Cart.update({ isPaid: false }, { where: { id: cart.id } });
+        }
+
         // Ajouter le produit au panier via la table de jointure ProductCart
         await ProductCart.create({
             CartId: cart.id,
@@ -350,6 +357,7 @@ app.post('/cart', checkJwt, async (req, res) => {
         res.status(500).json({ message: 'Error adding product to cart', error });
     }
 });
+
 
 
 
@@ -599,12 +607,12 @@ app.get("/productcategory/search/:text", async (req, res) => {
     const text = req.params.text.toLowerCase();
     try {
         const productCategories = await ProductCategory.findAll({
-            where: 
-                    {
-                        title: {
-                            [Op.like]: `%${text}%`
-                        }
-                    }         
+            where:
+            {
+                title: {
+                    [Op.like]: `%${text}%`
+                }
+            }
         });
 
         productCategories.length > 0 ? res.status(200).json(productCategories) : res.status(404).json({ message: "Aucune catégorie trouvée avec cette entrée." });
@@ -690,12 +698,12 @@ app.get("/enterprisecategory/search/:text", async (req, res) => {
     const text = req.params.text.toLowerCase();
     try {
         const enterpriseCategories = await EnterpriseCategory.findAll({
-            where: 
-                    {
-                        title: {
-                            [Op.like]: `%${text}%`
-                        }
-                    }         
+            where:
+            {
+                title: {
+                    [Op.like]: `%${text}%`
+                }
+            }
         });
 
         enterpriseCategories.length > 0 ? res.status(200).json(enterpriseCategories) : res.status(404).json({ message: "Aucune catégorie trouvée avec cette entrée." });
@@ -977,9 +985,9 @@ app.get("/search/:text", async (req, res) => {
 
 // ROUTES PANIER :
 
-app.get("/cart/:enterpriseId", async (req,res) => {
+app.get("/cart/:enterpriseId", async (req, res) => {
     try {
-        const cart = await Cart.findOne({ where: { EnterpriseId: req.params.enterpriseId }});
+        const cart = await Cart.findOne({ where: { EnterpriseId: req.params.enterpriseId } });
 
         if (!cart) {
             return res.status(404).json({ message: 'Cart not found' });
@@ -987,11 +995,95 @@ app.get("/cart/:enterpriseId", async (req,res) => {
             res.status(200).json(cart);
         }
 
-    } catch(error) {
+    } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Erreur lors de la recherche." });
     }
 })
+
+
+// ROUTES PAIEMENT :
+
+app.post('/create-checkout-session', async (req, res) => {
+    const { cartId } = req.body;  // Assurez-vous que cartId est envoyé depuis le frontend
+
+    // Récupérer les produits du panier
+    const productCartItems = await ProductCart.findAll({
+        where: { CartId: cartId },
+        include: [Product]
+    });
+
+    // Calculer le prix total du panier
+    let totalPrice = 0;
+    productCartItems.forEach(item => {
+        totalPrice += item.quantity * item.Product.price;
+    });
+
+    // Mettre à jour le prix total dans la table Cart
+    await Cart.update({ totalPrice }, { where: { id: cartId } });
+
+    // Créer des éléments de ligne pour Stripe à partir des produits du panier
+    const lineItems = productCartItems.map(item => ({
+        price_data: {
+            currency: 'eur',
+            product_data: {
+                name: item.Product.name,
+            },
+            unit_amount: Math.round(item.Product.price * 100),  // Stripe travaille en centimes
+        },
+        quantity: item.quantity,
+    }));
+
+    // Créer la session de paiement avec Stripe, en incluant CartId dans les métadonnées
+    const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: lineItems,
+        mode: 'payment',
+        metadata: {
+            cartId: cartId  // Inclure CartId dans les métadonnées
+        },
+        success_url: `http://localhost:4200/success`,
+        cancel_url: `http://localhost:4200/cancel`,
+    });
+
+    res.json({ id: session.id });
+});
+
+
+app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    let event;
+
+    try {
+        // Construction de l'événement Stripe
+        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    } catch (err) {
+        res.status(400).send(`Webhook Error: ${err.message}`);
+        return;
+    }
+
+    // Vérifier si le paiement a été complété
+    if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+
+        // Récupérer le CartId depuis les métadonnées
+        const cartId = session.metadata.cartId;
+
+        // Marquer le panier comme payé
+        await Cart.update({ isPaid: true }, { where: { id: cartId } });
+
+        // Supprimer les lignes de ProductCart pour vider le panier
+        await ProductCart.destroy({ where: { CartId: cartId } });
+
+        // Envoyer une réponse de succès à Stripe
+        res.status(200).send('Success');
+    } else {
+        res.status(400).send(`Unhandled event type ${event.type}`);
+    }
+});
+
+
+
 
 
 app.listen(8051, () => {

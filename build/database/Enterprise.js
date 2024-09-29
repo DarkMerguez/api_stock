@@ -10,7 +10,8 @@ const Enterprise = sequelize.define("Enterprise", {
         type: DataTypes.BIGINT,
         allowNull: false,
         unique: true
-    }
+    },
+    iban: DataTypes.BIGINT
 });
 Enterprise.hasMany(User);
 User.belongsTo(Enterprise);
