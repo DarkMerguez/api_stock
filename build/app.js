@@ -40,23 +40,30 @@ const secretKey = process.env.JWT_SECRET;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const body_parser_1 = __importDefault(require("body-parser"));
 app.use(body_parser_1.default.json());
+
+
 // Middleware pour vérifier le JWT
 const checkJwt = (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader)
         return res.status(401).json({ message: 'No token provided' });
+
     const token = authHeader.split(' ')[1]; // Extraire le token (sans le mot 'Bearer')
+    
     jsonwebtoken_1.default.verify(token, secretKey, (err, decoded) => {
         if (err)
             return res.status(401).json({ message: 'Unauthorized' });
-        req.body.user = decoded; // Stocker le contenu du token dans la requête
+
+        req.user = decoded; // Stocker le contenu du token dans req.user
         next();
     });
 };
+
 // Route protégée par JWT
 app.get('/protected', checkJwt, (req, res) => {
-    res.json({ message: 'You are authorized', user: req.body.user });
+    res.json({ message: 'You are authorized', user: req.user });
 });
+
 // Route de login pour générer un token JWT
 app.post('/login', async (req, res) => {
     const { email, password } = req.body;
@@ -73,7 +80,16 @@ app.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid password' });
         }
         // Créer un payload JWT
-        const payload = { email: user.email, role: user.role, id: user.id, ImageId: user.ImageId };
+        let payload = {
+            email: user.email,
+            role: user.role,
+            id: user.id,
+            ImageId: user.ImageId
+        };
+        // Ajouter l'EnterpriseId s'il existe
+        if (user.EnterpriseId) {
+            payload.EnterpriseId = user.EnterpriseId;
+        }
         // Générer le token
         const token = jsonwebtoken_1.default.sign(payload, secretKey, { expiresIn: '1d' });
         res.json({ token });
@@ -83,6 +99,7 @@ app.post('/login', async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+
 // Récupérer un utilisateur grâce au token :
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -97,6 +114,9 @@ const authenticateToken = (req, res, next) => {
     });
 };
 exports.authenticateToken = authenticateToken;
+
+
+
 // ROUTES DE PRODUIT :
 app.get("/products", async (req, res) => {
     try {
@@ -274,6 +294,42 @@ app.put("/product/:id", async (req, res) => {
         res.status(500).json({ message: "Erreur lors de la modification du produit.", error });
     }
 });
+//ajouter un produit au panier :
+app.post('/cart', checkJwt, async (req, res) => {
+    const { productId, quantity } = req.body;
+
+    try {
+        const enterpriseId = req.user.EnterpriseId;  // Récupérer l'EnterpriseId du token JWT
+
+        if (!enterpriseId) {
+            return res.status(400).json({ message: 'No enterprise associated with this user' });
+        }
+
+        // Chercher le panier lié à l'entreprise de l'utilisateur
+        let cart = await Cart.findOne({ where: { EnterpriseId: enterpriseId } });
+
+        // Si aucun panier n'est trouvé, en créer un nouveau
+        if (!cart) {
+            cart = await Cart.create({ EnterpriseId: enterpriseId });
+        }
+
+        // Ajouter le produit au panier via la table de jointure ProductCart
+        await ProductCart.create({
+            CartId: cart.id,
+            ProductId: productId,
+            quantity
+        });
+
+        res.status(200).json({ message: 'Product added to cart' });
+    } catch (error) {
+        console.error('Error adding product to cart:', error);
+        res.status(500).json({ message: 'Error adding product to cart', error });
+    }
+});
+
+  
+
+
 // ROUTES POUR LES ENTREPRISES :
 app.get("/enterprises", async (req, res) => {
     try {
@@ -606,7 +662,7 @@ app.put("/enterprisecategory/:id", async (req, res) => {
     }
 });
 // ROUTES IMAGES :
-//Gérer l'upload de fichiers :
+//Gérer l'upload de plusieurs fichiers :
 app.post("/upload", async (req, res) => {
     try {
         // Vérifier si des fichiers ont été envoyés

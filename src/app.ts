@@ -82,7 +82,17 @@ app.post('/login', async (req: Request, res: Response) => {
         }
 
         // Créer un payload JWT
-        const payload = { email: user.email, role: user.role, id: user.id, ImageId: user.ImageId };
+        let payload: any = { 
+            email: user.email, 
+            role: user.role, 
+            id: user.id, 
+            ImageId: user.ImageId 
+        };
+
+        // Ajouter l'EnterpriseId s'il existe
+        if (user.EnterpriseId) {
+            payload.EnterpriseId = user.EnterpriseId;
+        }
 
         // Générer le token
         const token = jwt.sign(payload, secretKey, { expiresIn: '1d' });
@@ -92,6 +102,7 @@ app.post('/login', async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+
 
 // Récupérer un utilisateur grâce au token :
 export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
@@ -306,6 +317,33 @@ app.put("/product/:id", async (req, res) => {
         res.status(500).json({ message: "Erreur lors de la modification du produit.", error });
     }
 });
+
+//ajouter un produit au panier :
+app.post('/cart', async (req, res) => {
+  const { productId, quantity } = req.body;
+
+
+  try {
+    const cart = await Cart.findOne({ where: { EnterpriseId: req.user.EnterpriseId } });
+    const product = await Product.findByPk(productId);
+
+    if (!cart || !product) {
+      return res.status(404).json({ message: 'Cart or product not found' });
+    }
+
+    await ProductCart.create({
+      CartId: cart.id,
+      ProductId: product.id,
+      quantity
+    });
+
+    res.status(200).json({ message: 'Product added to cart' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error adding product to cart', error });
+    console.log(error);
+  }
+});
+
 
 
 // ROUTES POUR LES ENTREPRISES :
@@ -706,7 +744,7 @@ app.put("/enterprisecategory/:id", async (req, res) => {
 
 // ROUTES IMAGES :
 
-//Gérer l'upload de fichiers :
+//Gérer l'upload de plusieurs fichiers :
 
 app.post("/upload", async (req, res) => {
     try {
