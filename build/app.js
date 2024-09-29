@@ -143,6 +143,25 @@ app.get("/products/category/:productCategoryId", async (req, res) => {
         res.status(500).json({ message: "Erreur lors de la recherche des Produits." });
     }
 });
+app.get("/products/enterprise/:enterpriseId", async (req, res) => {
+    try {
+        const products = await Product.findAll({
+            where: {
+                EnterpriseId: req.params.enterpriseId
+            }
+        });
+        if (products) {
+            res.status(200).json(products);
+        }
+        else {
+            res.status(404).json({ message: "Aucun Produit trouvé avec cette entreprise." });
+        }
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Erreur lors de la recherche des Produits." });
+    }
+});
 app.get("/products/search/:text", async (req, res) => {
     const text = req.params.text.toLowerCase();
     try {
@@ -455,6 +474,23 @@ app.get("/productcategory/:id", async (req, res) => {
         res.status(500).json("Erreur 500");
     }
 });
+app.get("/productcategory/search/:text", async (req, res) => {
+    const text = req.params.text.toLowerCase();
+    try {
+        const productCategories = await ProductCategory.findAll({
+            where: {
+                title: {
+                    [Op.like]: `%${text}%`
+                }
+            }
+        });
+        productCategories.length > 0 ? res.status(200).json(productCategories) : res.status(404).json({ message: "Aucune catégorie trouvée avec cette entrée." });
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Erreur lors de la recherche des catégories." });
+    }
+});
 app.post("/productcategory", async (req, res) => {
     try {
         const newCategory = req.body;
@@ -515,6 +551,23 @@ app.get("/enterprisecategory/:id", async (req, res) => {
     catch (error) {
         console.log(error);
         res.status(500).json("Erreur 500");
+    }
+});
+app.get("/enterprisecategory/search/:text", async (req, res) => {
+    const text = req.params.text.toLowerCase();
+    try {
+        const enterpriseCategories = await EnterpriseCategory.findAll({
+            where: {
+                title: {
+                    [Op.like]: `%${text}%`
+                }
+            }
+        });
+        enterpriseCategories.length > 0 ? res.status(200).json(enterpriseCategories) : res.status(404).json({ message: "Aucune catégorie trouvée avec cette entrée." });
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Erreur lors de la recherche des catégories." });
     }
 });
 app.post("/enterprisecategory", async (req, res) => {
@@ -695,6 +748,53 @@ app.delete('/images/:imageId', async (req, res) => {
     }
     catch (error) {
         res.status(500).json({ message: 'An error occurred while deleting the image', error });
+    }
+});
+// ROUTE RECHERCHE GENERALE
+app.get("/search/:text", async (req, res) => {
+    const text = req.params.text.toLowerCase();
+    try {
+        // Recherche pour les produits
+        const products = await Product.findAll({
+            where: {
+                [Op.or]: [
+                    { name: { [Op.like]: `%${text}%` } },
+                    { description: { [Op.like]: `%${text}%` } }
+                ]
+            }
+        });
+        // Recherche pour les entreprises
+        const enterprises = await Enterprise.findAll({
+            where: {
+                [Op.or]: [
+                    { name: { [Op.like]: `%${text}%` } },
+                    { siret: text }
+                ]
+            }
+        });
+        // Recherche pour les catégories de produits
+        const productCategories = await ProductCategory.findAll({
+            where: {
+                title: { [Op.like]: `%${text}%` }
+            }
+        });
+        // Recherche pour les catégories d'entreprises
+        const enterpriseCategories = await EnterpriseCategory.findAll({
+            where: {
+                title: { [Op.like]: `%${text}%` }
+            }
+        });
+        const results = {
+            products,
+            enterprises,
+            productCategories,
+            enterpriseCategories
+        };
+        res.status(200).json(results);
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Erreur lors de la recherche." });
     }
 });
 app.listen(8051, () => {
