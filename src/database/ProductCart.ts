@@ -3,7 +3,7 @@ const sequelize = require("../database");
 const  Product  = require("./Product");
 const Cart = require("./Cart");
 
-const ProductCart = sequelize.define("ProductCart", {
+export const ProductCart = sequelize.define("ProductCart", {
     quantity: DataTypes.INTEGER
 })
 

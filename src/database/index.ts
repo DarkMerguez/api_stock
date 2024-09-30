@@ -1,3 +1,6 @@
+import { Association } from "sequelize";
+import { ProductCart } from "./ProductCart";
+
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const { Sequelize, DataTypes, Op } = require("sequelize");
@@ -39,6 +42,8 @@ module.exports.Order = require("./Order");
 module.exports.OrderProduct = require("./OrderProduct");
 module.exports.ProductCart = require("./ProductCart");
 module.exports.ProductImage = require("./ProductImage");
+
+
 
 sequelize.sync({ force: true })
     .then(async () => {

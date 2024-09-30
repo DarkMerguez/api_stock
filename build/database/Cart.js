@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Cart = void 0;
 const { DataTypes } = require("sequelize");
 const sequelize = require("../database");
 const Enterprise = require("./Enterprise");
-const Cart = sequelize.define("Cart", {
+exports.Cart = sequelize.define("Cart", {
     isPaid: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
@@ -15,6 +16,6 @@ const Cart = sequelize.define("Cart", {
         defaultValue: 0,
     }
 });
-Cart.belongsTo(Enterprise);
-Enterprise.hasOne(Cart);
-module.exports = Cart;
+exports.Cart.belongsTo(Enterprise);
+Enterprise.hasOne(exports.Cart);
+module.exports = exports.Cart;

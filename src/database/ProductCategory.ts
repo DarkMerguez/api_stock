@@ -7,5 +7,4 @@ const ProductCategory = sequelize.define("ProductCategory", {
 
 
 
-
 module.exports = ProductCategory;

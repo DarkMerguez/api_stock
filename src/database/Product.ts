@@ -3,7 +3,7 @@ const sequelize = require("../database");
 const  ProductCategory  = require("./ProductCategory");
 const  Enterprise  = require("./Enterprise");
 
-const Product = sequelize.define("Product", {
+export const Product = sequelize.define("Product", {
     name: DataTypes.TEXT,
     price: DataTypes.FLOAT,
     description: DataTypes.TEXT,
