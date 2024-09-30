@@ -58,12 +58,38 @@ sequelize.sync({ force: true })
         const image = sequelize.models.Image;
 
         const entreprises = await Enterprise.bulkCreate([
-            { name: "La Poste", address: "12 rue du Courrier", siret: 987654321 },
-            { name: "Tech Valley", address: "24 Avenue des Startups", siret: 123987456 },
-            { name: "Mobilité Durable", address: "56 rue des Voitures Electriques", siret: 321654987 },
-            { name: "InnoTech", address: "107 rue de l'Innovation", siret: 654321789 },
-            { name: "Eco Solutions", address: "203 Allée Verte", siret: 789456123 }
+            { 
+                name: "La Poste", 
+                address: "12 rue du Courrier", 
+                siret: 987654321, 
+                iban: 12345678901234567 
+            },
+            { 
+                name: "Tech Valley", 
+                address: "24 Avenue des Startups", 
+                siret: 123987456, 
+                iban: 23456789012345678 
+            },
+            { 
+                name: "Mobilité Durable", 
+                address: "56 rue des Voitures Electriques", 
+                siret: 321654987, 
+                iban: 34567890123456789 
+            },
+            { 
+                name: "InnoTech", 
+                address: "107 rue de l'Innovation", 
+                siret: 654321789, 
+                iban: 45678901234567890
+            },
+            { 
+                name: "Eco Solutions", 
+                address: "203 Allée Verte", 
+                siret: 789456123, 
+                iban: 56789012345678901
+            }
         ]);
+        
 
         const produits1 = await Product.bulkCreate([
             { name: "Peugeot 308", price: 15000, description: "Voiture compacte", isFavorite: 0, stock: 30, EnterpriseId: entreprises[0].id },
@@ -147,8 +173,8 @@ sequelize.sync({ force: true })
         const users = await user.bulkCreate([
             { firstName: "Jeremie", lastName: "Laroche", password: "Ricard4ever", email: "j@jerem.fr", role: "Admin" },
             { firstName: "Alice", lastName: "Dupont", password: "abcdef", email: "alice@example.com", role: "Gestionnaire" },
-            { firstName: "Paul", lastName: "Martin", password: "pass123", email: "paul@example.com", role: "Employee" },
-            { firstName: "Sara", lastName: "Dubois", password: "mypassword", email: "sara@example.com", role: "Gestionnaire" },
+            { firstName: "Paul", lastName: "Martin", password: "pass123", email: "paul@example.com", role: "Gestionnaire" },
+            { firstName: "Sara", lastName: "Dubois", password: "mypassword", email: "sara@example.com", role: "Employee" },
             { firstName: "Louis", lastName: "Bernard", password: "louispass", email: "louis@example.com", role: "Employee" }
         ]);
 
@@ -162,8 +188,8 @@ sequelize.sync({ force: true })
 
         // Définir un avatar par défaut
         const defaultImage = await image.findOrCreate({
-            where: { url: 'https://assets.codepen.io/1480814/av+1.png' },
-            defaults: { url: 'https://assets.codepen.io/1480814/av+1.png' }
+            where: { url: "https://assets.codepen.io/1480814/av+1.png" },
+            defaults: { url: "https://assets.codepen.io/1480814/av+1.png" }
         });
 
         // Met à jour tous les utilisateurs qui n'ont pas encore d'image associée

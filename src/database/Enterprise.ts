@@ -10,7 +10,11 @@ const Enterprise = sequelize.define("Enterprise", {
         allowNull: false,
         unique: true
     },
-    iban: DataTypes.BIGINT
+    iban: {
+        type: DataTypes.BIGINT,
+        allowNull: true,
+        unique: true
+    }
 });
 
 

@@ -1148,7 +1148,7 @@ app.post('/create-checkout-session', async (req, res) => {
     }
 });
 
-// Webhooks : écouter l'événement paiement validé pour décrémenter le stock
+// Webhooks : écouter l'événement paiement validé pour décrémenter le stock et créer la commande
 app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     const event = req.body;
 
@@ -1164,6 +1164,23 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
                 where: { CartId: cartId },
                 attributes: ['ProductId', 'quantity']  // Récupérer uniquement l'ID du produit et la quantité
             });
+
+            // Créer la commande
+            const order = await Order.create({
+                // Exemple de structure, adapte selon ton modèle Order
+                enterpriseId: session.metadata.enterpriseId, // ou autre info nécessaire
+                status: 'WaitingForValidation', // Statut initial de la commande
+                // Ajoute d'autres propriétés de la commande ici
+            });
+
+            // Ajouter les produits de la commande
+            for (const item of productCartItems) {
+                await OrderProduct.create({
+                    OrderId: order.id,
+                    ProductId: item.ProductId, // Assure-toi que l'ID du produit est correct
+                    quantity: item.quantity, // Utilise la quantité récupérée
+                });
+            }
 
             // Mettre à jour le stock de chaque produit
             for (const item of productCartItems) {
@@ -1181,8 +1198,9 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
                 where: { CartId: cartId },
             });
 
-            console.log(`Cart with id ${cartId} has been marked as paid and emptied`);
+            console.log(`Cart with id ${cartId} has been marked as paid, emptied, and order created with id ${order.id}`);
             break;
+
         // Gérer d'autres événements si nécessaire
         default:
             console.log(`Unhandled event type ${event.type}`);
@@ -1190,6 +1208,14 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
     res.status(200).send('Received');
 });
+
+
+
+
+
+
+
+
 
 
 

@@ -3,7 +3,11 @@ const sequelize = require("../database");
 const Enterprise = require("./Enterprise");
 
 const Order = sequelize.define("Order", {
-    status: DataTypes.INTEGER
+    status: {
+        type: DataTypes.ENUM('WaitingForValidation', 'Validated', 'Shipped', 'Finished'),
+        allowNull: false,
+        defaultValue: 'WaitingForValidation', // Valeur par défaut
+    }
 })
 
 
