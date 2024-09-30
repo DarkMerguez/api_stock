@@ -984,40 +984,55 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
     switch (event.type) {
         case 'checkout.session.completed':
             const session = event.data.object;
-            // Récupérer CartId à partir des métadonnées
+            // Récupérer CartId et buyerId à partir des métadonnées
             const cartId = session.metadata.cartId;
-            const buyerId = session.metadata.buyerId; // Récupérer buyerId des métadonnées
+            const buyerId = session.metadata.buyerId;
             // Récupérer les lignes du ProductCart où CartId correspond
             const productCartItems = await ProductCart.findAll({
                 where: { CartId: cartId },
-                attributes: ['ProductId', 'quantity'] // Récupérer uniquement l'ID du produit et la quantité
+                attributes: ['ProductId', 'quantity']
             });
-            // Créer la commande
-            const order = await Order.create({
-                buyerId: buyerId, // Utiliser buyerId pour l'acheteur
-                sellerId: null, // À définir par produit
-                status: 'WaitingForValidation', // Statut initial de la commande
-            });
-            // Ajouter les produits de la commande
+            // Regrouper les produits par sellerId
+            const ordersBySeller = {};
             for (const item of productCartItems) {
                 const product = await Product.findByPk(item.ProductId);
                 if (product) {
-                    // Créer une ligne d'OrderProduct pour chaque produit
-                    await OrderProduct.create({
-                        OrderId: order.id,
-                        ProductId: item.ProductId, // Assure-toi que l'ID du produit est correct
-                        quantity: item.quantity, // Utilise la quantité récupérée
+                    const sellerId = product.EnterpriseId;
+                    // Si le sellerId n'existe pas dans l'objet, initialiser un tableau
+                    if (!ordersBySeller[sellerId]) {
+                        ordersBySeller[sellerId] = [];
+                    }
+                    // Ajouter le produit et sa quantité au tableau du seller
+                    ordersBySeller[sellerId].push({
+                        ProductId: item.ProductId,
+                        quantity: item.quantity
                     });
-                    // Mettre à jour le sellerId de la commande selon le produit
-                    await Order.update({ sellerId: product.EnterpriseId }, { where: { id: order.id } });
                 }
             }
-            // Mettre à jour le stock de chaque produit
-            for (const item of productCartItems) {
-                await Product.decrement('stock', {
-                    by: item.quantity, // Réduire le stock par la quantité achetée
-                    where: { id: item.ProductId }
+            // Créer une commande pour chaque sellerId
+            for (const sellerId in ordersBySeller) {
+                const orderItems = ordersBySeller[sellerId];
+                // Créer la commande
+                const order = await Order.create({
+                    buyerId: buyerId,
+                    sellerId: sellerId, // Définir le sellerId de la commande
+                    status: 'WaitingForValidation',
                 });
+                // Ajouter les produits de la commande
+                for (const item of orderItems) {
+                    await OrderProduct.create({
+                        OrderId: order.id,
+                        ProductId: item.ProductId,
+                        quantity: item.quantity,
+                    });
+                }
+                // Mettre à jour le stock pour chaque produit dans la commande
+                for (const item of orderItems) {
+                    await Product.decrement('stock', {
+                        by: item.quantity,
+                        where: { id: item.ProductId }
+                    });
+                }
             }
             // Mettre à jour l'attribut isPaid du panier
             await Cart.update({ isPaid: true }, { where: { id: cartId } });
@@ -1025,9 +1040,8 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
             await ProductCart.destroy({
                 where: { CartId: cartId },
             });
-            console.log(`Cart with id ${cartId} has been marked as paid, emptied, and order created with id ${order.id}`);
+            console.log(`Cart with id ${cartId} has been marked as paid, emptied, and orders created for each seller.`);
             break;
-        // Gérer d'autres événements si nécessaire
         default:
             console.log(`Unhandled event type ${event.type}`);
     }
