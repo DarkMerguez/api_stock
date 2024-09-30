@@ -1047,6 +1047,23 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
     }
     res.status(200).send('Received');
 });
+// Routes Order
+// Route pour récupérer les commandes d'une entreprise
+app.get('/orders/:buyerId', async (req, res) => {
+    const { buyerId } = req.params;
+    try {
+        const orders = await Order.findAll({
+            where: { buyerId: buyerId },
+            order: [['createdAt', 'DESC']], // Trier par date de création
+            limit: 10 // Limiter le nombre de résultats pour la requête
+        });
+        res.json(orders);
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erreur lors de la récupération des commandes.' });
+    }
+});
 app.listen(8051, () => {
     console.log("Youhouuuuu serveur lancé sur localhost:8051");
 });
