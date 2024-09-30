@@ -28,7 +28,6 @@ const saltRounds = 10;
 const fileUpload = require("express-fileupload");
 const path = require('path');
 
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 app.use(express.json());
 app.use(cors());
@@ -39,6 +38,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const secretKey = process.env.JWT_SECRET;
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 import express, { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
@@ -1147,6 +1147,50 @@ app.post('/create-checkout-session', async (req, res) => {
         res.status(500).json({ message: "Erreur lors de la création de la session de paiement." });
     }
 });
+
+// Webhooks : écouter l'événement paiement validé pour décrémenter le stock
+app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const event = req.body;
+
+    switch (event.type) {
+        case 'checkout.session.completed':
+            const session = event.data.object;
+
+            // Récupérer CartId à partir des métadonnées
+            const cartId = session.metadata.cartId;
+
+            // Récupérer les lignes du ProductCart où CartId correspond
+            const productCartItems = await ProductCart.findAll({
+                where: { CartId: cartId },
+                attributes: ['ProductId', 'quantity']  // Récupérer uniquement l'ID du produit et la quantité
+            });
+
+            // Mettre à jour le stock de chaque produit
+            for (const item of productCartItems) {
+                await Product.decrement('stock', {
+                    by: item.quantity, // Réduire le stock par la quantité achetée
+                    where: { id: item.ProductId }
+                });
+            }
+
+            // Mettre à jour l'attribut isPaid du panier
+            await Cart.update({ isPaid: true }, { where: { id: cartId } });
+
+            // Supprimer les lignes de ProductCart associées au cartId
+            await ProductCart.destroy({
+                where: { CartId: cartId },
+            });
+
+            console.log(`Cart with id ${cartId} has been marked as paid and emptied`);
+            break;
+        // Gérer d'autres événements si nécessaire
+        default:
+            console.log(`Unhandled event type ${event.type}`);
+    }
+
+    res.status(200).send('Received');
+});
+
 
 
 
