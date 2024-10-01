@@ -1059,20 +1059,43 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
     res.status(200).send('Received');
 });
 // Routes Order
-// Route pour récupérer les commandes d'une entreprise
-app.get('/orders/:buyerId', async (req, res) => {
-    const { buyerId } = req.params;
+// Route pour récupérer les commandes d'une entreprise (en tant qu'acheteur ou vendeur)
+app.get('/orders/:enterpriseId', async (req, res) => {
+    const { enterpriseId } = req.params;
     try {
+        // Chercher les commandes où l'utilisateur est soit le buyerId (acheteur), soit le sellerId (vendeur)
         const orders = await Order.findAll({
-            where: { buyerId: buyerId },
-            order: [['createdAt', 'DESC']], // Trier par date de création
-            limit: 10 // Limiter le nombre de résultats pour la requête
+            where: {
+                [Op.or]: [
+                    { buyerId: enterpriseId }, // Commandes où l'utilisateur est l'acheteur
+                    { sellerId: enterpriseId } // Commandes où l'utilisateur est le vendeur
+                ]
+            },
+            order: [['createdAt', 'DESC']]
         });
         res.json(orders);
     }
     catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Erreur lors de la récupération des commandes.' });
+    }
+});
+// Route pour mettre à jour le statut d'une commande
+app.put('/orders/:orderId/status', async (req, res) => {
+    const { orderId } = req.params;
+    const { status } = req.body;
+    try {
+        const order = await Order.findByPk(orderId);
+        if (!order) {
+            return res.status(404).json({ message: 'Commande non trouvée' });
+        }
+        order.status = status;
+        await order.save();
+        res.status(200).json({ message: 'Statut de la commande mis à jour avec succès' });
+    }
+    catch (error) {
+        console.error('Erreur lors de la mise à jour du statut de la commande:', error);
+        res.status(500).json({ message: 'Erreur lors de la mise à jour du statut de la commande' });
     }
 });
 // Routes pour les factures :
