@@ -1085,9 +1085,9 @@ app.get('/bill/:orderId', async (req, res) => {
             return res.status(404).json({ message: "Order not found" });
         }
         // Vérifier si une facture existe déjà
-        const existingBill = await Bill.findOne({ where: { orderId: order.id } });
+        const existingBill = await Bill.findOne({ where: { OrderId: order.id } });
         if (existingBill) {
-            // Si la facture existe, la retourner
+            // Si la facture existe, la retourner en téléchargement
             return res.download(`./invoices/invoice_${existingBill.id}.pdf`, `Facture_${existingBill.id}.pdf`);
         }
         // Récupérer le vendeur et l'acheteur
@@ -1106,7 +1106,7 @@ app.get('/bill/:orderId', async (req, res) => {
         const bill = await Bill.create({
             date: new Date(),
             totalPrice: order.totalPrice,
-            orderId: order.id,
+            OrderId: order.id,
             sellerId: order.sellerId,
             buyerId: order.buyerId
         });
