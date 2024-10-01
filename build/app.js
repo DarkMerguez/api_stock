@@ -26,6 +26,8 @@ const { Op } = require("sequelize");
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const PDFDocument = require('pdfkit');
+const fs = require('fs');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const fileUpload = require("express-fileupload");
@@ -1012,11 +1014,20 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
             // Créer une commande pour chaque sellerId
             for (const sellerId in ordersBySeller) {
                 const orderItems = ordersBySeller[sellerId];
-                // Créer la commande
+                let totalPrice = 0;
+                // Calculer le prix total pour cette commande
+                for (const item of orderItems) {
+                    const product = await Product.findByPk(item.ProductId);
+                    if (product) {
+                        totalPrice += product.price * item.quantity; // Calculer le montant total
+                    }
+                }
+                // Créer la commande avec le totalPrice
                 const order = await Order.create({
                     buyerId: buyerId,
                     sellerId: sellerId, // Définir le sellerId de la commande
                     status: 'WaitingForValidation',
+                    totalPrice: totalPrice // Enregistrer le totalPrice
                 });
                 // Ajouter les produits de la commande
                 for (const item of orderItems) {
@@ -1062,6 +1073,118 @@ app.get('/orders/:buyerId', async (req, res) => {
     catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Erreur lors de la récupération des commandes.' });
+    }
+});
+// Routes pour les factures :
+app.get('/bill/:orderId', async (req, res) => {
+    try {
+        const orderId = req.params.orderId;
+        // Récupérer la commande
+        const order = await Order.findByPk(orderId);
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+        // Vérifier si une facture existe déjà
+        const existingBill = await Bill.findOne({ where: { orderId: order.id } });
+        if (existingBill) {
+            // Si la facture existe, la retourner
+            return res.download(`./invoices/invoice_${existingBill.id}.pdf`, `Facture_${existingBill.id}.pdf`);
+        }
+        // Récupérer le vendeur et l'acheteur
+        const seller = await Enterprise.findByPk(order.sellerId);
+        const buyer = await Enterprise.findByPk(order.buyerId);
+        // Récupérer les produits associés à la commande
+        const orderProducts = await OrderProduct.findAll({
+            where: { OrderId: order.id },
+            attributes: ['ProductId', 'quantity']
+        });
+        // Récupérer les détails des produits
+        const products = await Product.findAll({
+            where: { id: orderProducts.map(item => item.ProductId) }
+        });
+        // Créer la facture
+        const bill = await Bill.create({
+            date: new Date(),
+            totalPrice: order.totalPrice,
+            orderId: order.id,
+            sellerId: order.sellerId,
+            buyerId: order.buyerId
+        });
+        // Ajouter les produits à la facture
+        for (const orderProduct of orderProducts) {
+            const product = products.find(p => p.id === orderProduct.ProductId);
+            if (product) {
+                await BillProduct.create({
+                    BillId: bill.id,
+                    ProductId: product.id,
+                    quantity: orderProduct.quantity
+                });
+            }
+        }
+        // Générer le PDF
+        const doc = new PDFDocument();
+        const filePath = `./invoices/invoice_${bill.id}.pdf`;
+        doc.pipe(fs.createWriteStream(filePath));
+        // Informations sur la facture
+        doc.fontSize(20).text(`Facture N°: ${bill.id}`, { align: 'center' });
+        doc.fontSize(12).text(`Date: ${bill.date.toLocaleDateString('fr-FR')}`, { align: 'center' });
+        doc.moveDown();
+        doc.moveDown();
+        doc.fontSize(14).text(`Vendeur: ${seller.name}`, { align: 'left' });
+        doc.text(`Adresse: ${seller.address}`, { align: 'left' });
+        doc.text(`SIRET: ${seller.siret}`, { align: 'left' });
+        doc.moveDown();
+        doc.text(`Acheteur: ${buyer.name}`, { align: 'left' });
+        doc.text(`Adresse: ${buyer.address}`, { align: 'left' });
+        doc.text(`SIRET: ${buyer.siret}`, { align: 'left' });
+        doc.moveDown();
+        doc.moveDown();
+        doc.text(`Numéro de commande : ${order.id} , le ${bill.date.toLocaleDateString('fr-FR')}`, { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(16).font('Helvetica-Bold').text('Produits facturés:', { underline: true });
+        doc.fontSize(14).font('Helvetica');
+        doc.moveDown();
+        // Détails des produits avec stylisation
+        for (const orderProduct of orderProducts) {
+            const product = products.find(p => p.id === orderProduct.ProductId);
+            if (product) {
+                const priceHT = (product.price * 0.8).toFixed(2);
+                const priceTTC = product.price.toFixed(2);
+                const totalProduitHT = (product.price * 0.8 * orderProduct.quantity).toFixed(2);
+                const totalProduitTTC = (product.price * orderProduct.quantity).toFixed(2);
+                const totalProduitTVA = (product.price * 0.2 * orderProduct.quantity).toFixed(2);
+                doc.text(`Nom du produit: ${product.name}`);
+                doc.text(`Référence produit: ${product.id}`);
+                doc.text(`Quantité: ${orderProduct.quantity}`);
+                doc.text(`Prix HT: ${priceHT}€ * ${orderProduct.quantity} = ${totalProduitHT}€`);
+                doc.text(`Prix TTC: ${priceTTC}€ * ${orderProduct.quantity} = ${totalProduitTTC}€ (dont TVA 20%: ${totalProduitTVA} €)`);
+                doc.moveDown();
+                doc.text(`----------------------------------------`, { align: 'center' });
+                doc.moveDown();
+            }
+        }
+        // Total
+        const totalPriceHT = (parseFloat(order.totalPrice) * 0.8).toFixed(2);
+        const totalPriceTTC = parseFloat(order.totalPrice).toFixed(2);
+        const totalTVA = (parseFloat(order.totalPrice) * 0.2).toFixed(2);
+        doc.moveDown();
+        doc.text(`------------------------------------------------------------------------------------------`, { align: 'center' });
+        doc.moveDown();
+        doc.moveDown();
+        doc.text(`Total HT: ${totalPriceHT}€`, { align: 'center' });
+        doc.moveDown(0.5);
+        doc.fontSize(16).font('Helvetica-Bold')
+            .text(`Total TTC: ${totalPriceTTC}€`, { align: 'center' });
+        doc.fontSize(12).font('Helvetica')
+            .text(`(dont TVA 20%: ${totalTVA} €)`, { align: 'center' });
+        // Finaliser et fermer le PDF
+        doc.end();
+        // Ouvrir le PDF dans un nouvel onglet
+        res.download(filePath, `Facture_${bill.id}.pdf`);
+    }
+    catch (error) {
+        console.error('Error generating bill:', error);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 });
 app.listen(8051, () => {

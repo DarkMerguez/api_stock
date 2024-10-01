@@ -4,8 +4,12 @@ const Order = require("./Order");
 const Enterprise = require("./Enterprise");
 
 const Bill = sequelize.define("Bill", {
-    TVA: DataTypes.FLOAT,
-    paymentMethod: DataTypes.STRING
+    date : DataTypes.DATE,
+    totalPrice: {
+        type: DataTypes.DECIMAL(10, 2), // Précision pour des valeurs monétaires
+        allowNull: false,
+        defaultValue: 0.00,
+      }
 })
 
 

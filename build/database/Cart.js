@@ -11,9 +11,9 @@ exports.Cart = sequelize.define("Cart", {
         defaultValue: false,
     },
     totalPrice: {
-        type: DataTypes.FLOAT,
+        type: DataTypes.DECIMAL(10, 2), // Précision pour des valeurs monétaires
         allowNull: false,
-        defaultValue: 0,
+        defaultValue: 0.00,
     }
 });
 exports.Cart.belongsTo(Enterprise);

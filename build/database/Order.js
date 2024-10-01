@@ -8,6 +8,11 @@ const Order = sequelize.define("Order", {
         type: DataTypes.ENUM('WaitingForValidation', 'Validated', 'Shipped', 'Finished'),
         allowNull: false,
         defaultValue: 'WaitingForValidation', // Valeur par défaut
+    },
+    totalPrice: {
+        type: DataTypes.DECIMAL(10, 2), // Précision pour des valeurs monétaires
+        allowNull: false,
+        defaultValue: 0.00,
     }
 });
 Order.belongsTo(Enterprise, { as: 'seller', foreignKey: 'sellerId' });
