@@ -1099,6 +1099,24 @@ app.put('/orders/:orderId/status', async (req, res) => {
     }
 });
 // Routes pour les factures :
+const waitForFile = (filePath, timeout = 10000) => {
+    return new Promise((resolve, reject) => {
+        const start = Date.now();
+        const checkFileExists = () => {
+            if (fs.existsSync(filePath)) {
+                resolve();
+            }
+            else if (Date.now() - start >= timeout) {
+                reject(new Error('File not found within timeout'));
+            }
+            else {
+                setTimeout(checkFileExists, 100); // Re-vérifie toutes les 100ms
+            }
+        };
+        checkFileExists();
+    });
+};
+// Route pour générer facture 
 app.get('/bill/:orderId', async (req, res) => {
     try {
         const orderId = req.params.orderId;
@@ -1108,11 +1126,28 @@ app.get('/bill/:orderId', async (req, res) => {
             return res.status(404).json({ message: "Order not found" });
         }
         // Vérifier si une facture existe déjà
-        const existingBill = await Bill.findOne({ where: { OrderId: order.id } });
-        if (existingBill) {
-            // Si la facture existe, la retourner en téléchargement
-            return res.download(`./invoices/invoice_${existingBill.id}.pdf`, `Facture_${existingBill.id}.pdf`);
+        let bill = await Bill.findOne({ where: { OrderId: order.id } });
+        if (bill) {
+            // Vérifier si le fichier PDF correspondant existe déjà
+            const filePath = path.join(__dirname, `./invoices/invoice_${bill.id}.pdf`);
+            if (fs.existsSync(filePath)) {
+                // Ajoutez des en-têtes pour éviter la mise en cache
+                res.set('Cache-Control', 'no-cache, no-store, must-revalidate'); // HTTP 1.1.
+                res.set('Pragma', 'no-cache'); // HTTP 1.0.
+                res.set('Expires', '0'); // Proxies.
+                // Créer un paramètre unique pour éviter le cache
+                const uniqueParam = new Date().getTime();
+                return res.download(filePath, `Facture_${bill.id}.pdf?ts=${uniqueParam}`); // Télécharger la facture existante
+            }
         }
+        // Si la facture n'existe pas, la créer
+        bill = await Bill.create({
+            date: new Date(),
+            totalPrice: order.totalPrice,
+            OrderId: order.id,
+            sellerId: order.sellerId,
+            buyerId: order.buyerId
+        });
         // Récupérer le vendeur et l'acheteur
         const seller = await Enterprise.findByPk(order.sellerId);
         const buyer = await Enterprise.findByPk(order.buyerId);
@@ -1125,29 +1160,26 @@ app.get('/bill/:orderId', async (req, res) => {
         const products = await Product.findAll({
             where: { id: orderProducts.map(item => item.ProductId) }
         });
-        // Créer la facture
-        const bill = await Bill.create({
-            date: new Date(),
-            totalPrice: order.totalPrice,
-            OrderId: order.id,
-            sellerId: order.sellerId,
-            buyerId: order.buyerId
-        });
         // Ajouter les produits à la facture
         for (const orderProduct of orderProducts) {
-            const product = products.find(p => p.id === orderProduct.ProductId);
-            if (product) {
+            const existingBillProduct = await BillProduct.findOne({
+                where: {
+                    BillId: bill.id,
+                    ProductId: orderProduct.ProductId
+                }
+            });
+            if (!existingBillProduct) {
                 await BillProduct.create({
                     BillId: bill.id,
-                    ProductId: product.id,
+                    ProductId: orderProduct.ProductId,
                     quantity: orderProduct.quantity
                 });
             }
         }
         // Générer le PDF
         const doc = new PDFDocument();
-        const filePath = `./invoices/invoice_${bill.id}.pdf`;
-        doc.pipe(fs.createWriteStream(filePath));
+        const newFilePath = path.join(__dirname, `./invoices/invoice_${bill.id}.pdf`);
+        doc.pipe(fs.createWriteStream(newFilePath));
         // Informations sur la facture
         doc.fontSize(20).text(`Facture N°: ${bill.id}`, { align: 'center' });
         doc.fontSize(12).text(`Date: ${bill.date.toLocaleDateString('fr-FR')}`, { align: 'center' });
@@ -1167,7 +1199,7 @@ app.get('/bill/:orderId', async (req, res) => {
         doc.fontSize(16).font('Helvetica-Bold').text('Produits facturés:', { underline: true });
         doc.fontSize(14).font('Helvetica');
         doc.moveDown();
-        // Détails des produits avec stylisation
+        // Détails des produits
         for (const orderProduct of orderProducts) {
             const product = products.find(p => p.id === orderProduct.ProductId);
             if (product) {
@@ -1202,8 +1234,15 @@ app.get('/bill/:orderId', async (req, res) => {
             .text(`(dont TVA 20%: ${totalTVA} €)`, { align: 'center' });
         // Finaliser et fermer le PDF
         doc.end();
-        // Ouvrir le PDF dans un nouvel onglet
-        res.download(filePath, `Facture_${bill.id}.pdf`);
+        // Attendre que le fichier soit créé avant de le renvoyer
+        await waitForFile(newFilePath);
+        // Ajoutez des en-têtes pour éviter la mise en cache
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate'); // HTTP 1.1.
+        res.set('Pragma', 'no-cache'); // HTTP 1.0.
+        res.set('Expires', '0'); // Proxies.
+        // Créer un paramètre unique
+        const uniqueParam = new Date().getTime();
+        return res.download(newFilePath, `Facture_${bill.id}.pdf?ts=${uniqueParam}`); // Télécharger la nouvelle facture
     }
     catch (error) {
         console.error('Error generating bill:', error);
