@@ -109,7 +109,7 @@ erDiagram
     }
 
     Product ||--|{ ProductImage : "includes"
-    Images ||--|{ ProductImage : "represents"
+    Image ||--|{ ProductImage : "represents"
 
     Product ||--|{ CaracProduct : "has"
     Carac ||--|{ CaracProduct : "defines"
