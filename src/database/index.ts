@@ -57,6 +57,20 @@ sequelize.sync({ force: true })
         const user = sequelize.models.User;
         const image = sequelize.models.Image;
 
+        const jerem = await user.create({ firstName: "Jeremie", lastName: "Laroche", password: "Ricard4ever", email: "j@jerem.fr", role: "Admin" });
+        const stockEZ = await Enterprise.create({ 
+            name: "Stock'EZ", 
+            address: "8 rue d'Hozier", 
+            siret: 131313131313, 
+            iban: 12345678901291536 
+        });
+        const categoryStockEZ = await enterpriseCategory.create({ title: "Gestion" });
+        const imageStockEZ = await image.create({ url: "https://i.ibb.co/rQhHc7p/stockEZ.png" });
+
+        await categoryStockEZ.addEnterprise(stockEZ);
+        await imageStockEZ.setEnterprise(stockEZ);
+        await stockEZ.addUser(jerem);
+
         const entreprises = await Enterprise.bulkCreate([
             { 
                 name: "La Poste", 
@@ -160,18 +174,39 @@ sequelize.sync({ force: true })
             { title: "Automobile" },
             { title: "Informatique" },
             { title: "Télécommunications" },
-            { title: "Audiovisuel" }
+            { title: "Audiovisuel" },
+            { title: "Électroménager" },
+            { title: "Sport et Loisirs" },
+            { title: "Beauté et Santé" },
+            { title: "Alimentation" },
+            { title: "Bricolage et Jardinage" },
+            { title: "Mode et Accessoires" },
+            { title: "Jouets et Jeux" },
+            { title: "Papeterie" },
+            { title: "Équipements de bureau" },
+            { title: "Mobilier" }
         ]);
-
+        
         const categoriesEntreprises = await enterpriseCategory.bulkCreate([
             { title: "Logistique" },
             { title: "Technologie" },
             { title: "Mobilité" },
-            { title: "Énergies Vertes" }
+            { title: "Énergies Vertes" },
+            { title: "Santé" },
+            { title: "Éducation" },
+            { title: "Finance et Assurance" },
+            { title: "Hôtellerie et Restauration" },
+            { title: "Bâtiment et Travaux Publics" },
+            { title: "Agriculture et Agroalimentaire" },
+            { title: "Média et Divertissement" },
+            { title: "Services juridiques" },
+            { title: "Tourisme" },
+            { title: "Art et Culture" }
         ]);
+        
 
         const users = await user.bulkCreate([
-            { firstName: "Jeremie", lastName: "Laroche", password: "Ricard4ever", email: "j@jerem.fr", role: "Admin" },
+            { firstName: "Jean", lastName: "Bonbeurre", password: "jjjjj", email: "jean@jean.fr", role: "Employee" },
             { firstName: "Alice", lastName: "Dupont", password: "abcdef", email: "alice@example.com", role: "Gestionnaire" },
             { firstName: "Paul", lastName: "Martin", password: "pass123", email: "paul@example.com", role: "Gestionnaire" },
             { firstName: "Sara", lastName: "Dubois", password: "mypassword", email: "sara@example.com", role: "Employee" },
@@ -220,7 +255,7 @@ sequelize.sync({ force: true })
         await imagesEnterprise[5].setEnterprise(entreprises[4]);
 
         // Lier utilisateurs à leurs entreprises
-        await entreprises[0].addUser(users[0]); // Jeremie - La Poste
+        await entreprises[0].addUser(users[0]); // Jean - La Poste
         await entreprises[1].addUser(users[1]); // Alice - Tech Valley
         await entreprises[2].addUser(users[2]); // Paul - Mobilité Durable
         await entreprises[3].addUser(users[3]); // Sara - InnoTech

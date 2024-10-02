@@ -268,13 +268,12 @@ app.put("/product/:id", async (req, res) => {
                 await image.mv(uploadPath);
                 // Créer une nouvelle entrée dans la table Images
                 const newImage = await Image.create({
-                    url: `http://localhost:8051/${image.name}`, // Assurez-vous que le chemin est correct ici
-                    // Autres champs nécessaires pour l'image...
+                    url: `http://localhost:8051/${image.name}`,
                 });
                 // Ajouter l'association à la table ProductImage
                 await ProductImage.create({
                     ProductId: req.params.id,
-                    ImageId: newImage.id // Utilisez l'ID de la nouvelle image
+                    ImageId: newImage.id
                 });
             }
         }
