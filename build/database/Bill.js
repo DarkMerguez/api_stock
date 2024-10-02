@@ -9,7 +9,7 @@ const Bill = sequelize.define("Bill", {
     totalPrice: {
         type: DataTypes.DECIMAL(10, 2), // Précision pour des valeurs monétaires
         allowNull: false,
-        defaultValue: 0.00,
+        defaultValue: 0.00
     }
 });
 Bill.belongsTo(Order);

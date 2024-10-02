@@ -157,6 +157,7 @@ sequelize.sync({ force: true })
         { firstName: "Louis", lastName: "Bernard", password: "louispass", email: "louis@example.com", role: "Employee" }
     ]);
     const imagesEnterprise = await image.bulkCreate([
+        { url: "https://assets.codepen.io/1480814/av+1.png" },
         { url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS7EeWjxCLjNt6p7GnhBw5jXiXVA9pBDFe-NQ&s" },
         { url: "https://techvalley.pk/wp-content/uploads/2022/06/cropped-WhatsApp-Image-2022-06-08-at-12.01.19-AM.jpeg" },
         { url: "https://cdn.prod.website-files.com/6196216899614102596abf17/625eab94ec2f46d32a83b3ed_mobilite.jpg" },
@@ -185,11 +186,11 @@ sequelize.sync({ force: true })
     await categoriesEntreprises[2].addEnterprises([entreprises[2]]); // Mobilité Durable - Mobilité
     await categoriesEntreprises[3].addEnterprises([entreprises[4]]); // Eco Solutions - Énergies Vertes
     // Lien entreprises / images
-    await imagesEnterprise[0].setEnterprise(entreprises[0]);
-    await imagesEnterprise[1].setEnterprise(entreprises[1]);
-    await imagesEnterprise[2].setEnterprise(entreprises[2]);
-    await imagesEnterprise[3].setEnterprise(entreprises[3]);
-    await imagesEnterprise[4].setEnterprise(entreprises[4]);
+    await imagesEnterprise[1].setEnterprise(entreprises[0]);
+    await imagesEnterprise[2].setEnterprise(entreprises[1]);
+    await imagesEnterprise[3].setEnterprise(entreprises[2]);
+    await imagesEnterprise[4].setEnterprise(entreprises[3]);
+    await imagesEnterprise[5].setEnterprise(entreprises[4]);
     // Lier utilisateurs à leurs entreprises
     await entreprises[0].addUser(users[0]); // Jeremie - La Poste
     await entreprises[1].addUser(users[1]); // Alice - Tech Valley

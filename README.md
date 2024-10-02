@@ -8,17 +8,15 @@ erDiagram
         name TEXT
         price FLOAT
         description TEXT
-        isFavorite BOOLEAN
         stock INT
-        enterpriseId INT
-        productCategoryId INT
+        EnterpriseId INT
+        ProductCategoryId INT
     }
 
     ProductCart {
-        id INT
         quantity INT
-        productId INT
-        cartId INT
+        ProductId INT
+        CartId INT
     }
 
     Carac {
@@ -28,15 +26,16 @@ erDiagram
     }
 
     CaracProduct {
-        id INT
         value INT
-        caracId INT
-        productId INT
+        CaracId INT
+        ProductId INT
     }
 
     Cart {
         id INT
-        enterpriseId INT
+        isPaid BOOLEAN
+        totalPrice INT
+        EnterpriseId INT
     }
 
     User {
@@ -45,20 +44,19 @@ erDiagram
         lastName TEXT
         password TEXT
         email TEXT
-        imageId INT
-        enterpriseID INT
-        roleId INT
+        role TEXT
+        ImageId INT
+        EnterpriseID INT
     }
 
-    Images {
+    Image {
         id INT
         url TEXT
     }
 
-    ProductImages {
-        id INT
-        productId INT
-        imageId INT
+    ProductImage {
+        ProductId INT
+        ImageId INT
     }
 
     ProductCategory {
@@ -76,38 +74,42 @@ erDiagram
         name TEXT
         address TEXT
         siret INT
-        enterpriseCategoryId INT
-        imagesId INT
+        iban INT
+        EnterpriseCategoryId INT
+        ImageId INT
     }
 
     Bill {
         id INT
+        date DATE
+        totalPrice INT
         sellerId INT
         buyerId INT
-        orderId INT
+        OrderId INT
     }
 
     Order {
         id INT
-        status INT
+        status TEXT
+        totalPrice INT
         sellerId INT
         buyerId INT
     }
 
     BillProduct {
-        id INT
-        billId INT
-        productId INT
+        quantity INT
+        BillId INT
+        ProductId INT
     }
 
     OrderProduct {
-        id INT
-        orderId INT
-        productId INT
+        quantity INT
+        OrderId INT
+        ProductId INT
     }
 
-    Product ||--|{ ProductImages : "includes"
-    Images ||--|{ ProductImages : "represents"
+    Product ||--|{ ProductImage : "includes"
+    Images ||--|{ ProductImage : "represents"
 
     Product ||--|{ CaracProduct : "has"
     Carac ||--|{ CaracProduct : "defines"
@@ -122,7 +124,7 @@ erDiagram
     Product ||--|{ OrderProduct : "orders"
     Order ||--|{ OrderProduct : "contains"
 
-    User ||--|| Images : "has"
+    User ||--|| Image : "has"
 
     Order ||--|| Bill : "generates"
     Enterprise }|--|| EnterpriseCategory : "classified_as"
@@ -131,7 +133,7 @@ erDiagram
 
     Enterprise ||--|{ Product : "offers"
 
-    Enterprise ||--|| Images : "stores"
+    Enterprise ||--|| Image : "stores"
 
     Enterprise ||--|{ User : "employs"
 

@@ -286,7 +286,6 @@ app.put("/product/:id", async (req, res) => {
         res.status(500).json({ message: "Erreur lors de la modification du produit.", error });
     }
 });
-// Ajouter un produit au panier :
 app.post('/cart', checkJwt, async (req, res) => {
     const { productId, quantity } = req.body;
     try {
@@ -304,13 +303,23 @@ app.post('/cart', checkJwt, async (req, res) => {
         if (cart.isPaid) {
             await Cart.update({ isPaid: false }, { where: { id: cart.id } });
         }
-        // Ajouter le produit au panier via la table de jointure ProductCart
-        await ProductCart.create({
-            CartId: cart.id,
-            ProductId: productId,
-            quantity
+        // Vérifier si le produit existe déjà dans la table de jointure ProductCart pour ce panier
+        const productInCart = await ProductCart.findOne({
+            where: { CartId: cart.id, ProductId: productId }
         });
-        res.status(200).json({ message: 'Product added to cart' });
+        if (productInCart) {
+            // Si le produit est déjà dans le panier, mettre à jour la quantité
+            await ProductCart.update({ quantity: productInCart.quantity + quantity }, { where: { CartId: cart.id, ProductId: productId } });
+        }
+        else {
+            // Sinon, ajouter le produit au panier
+            await ProductCart.create({
+                CartId: cart.id,
+                ProductId: productId,
+                quantity
+            });
+        }
+        res.status(200).json({ message: 'Product added to cart or updated quantity' });
     }
     catch (error) {
         console.error('Error adding product to cart:', error);
