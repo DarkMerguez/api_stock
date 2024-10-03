@@ -1035,7 +1035,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
                     buyerId: buyerId,
                     sellerId: sellerId, // Définir le sellerId de la commande
                     status: 'WaitingForValidation',
-                    totalPrice: totalPrice // Enregistrer le totalPrice
+                    totalPrice: totalPrice
                 });
                 // Ajouter les produits de la commande
                 for (const item of orderItems) {

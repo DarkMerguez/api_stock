@@ -58,6 +58,7 @@ sequelize.sync({ force: true })
         const image = sequelize.models.Image;
 
         const jerem = await user.create({ firstName: "Jeremie", lastName: "Laroche", password: "Ricard4ever", email: "j@jerem.fr", role: "Admin" });
+        const mireille = await user.create({ firstName: "Mireille", lastName: "Labeille", password: "mmmmm", email: "mir@mir.fr", role: "Gestionnaire" });
         const stockEZ = await Enterprise.create({ 
             name: "Stock'EZ", 
             address: "8 rue d'Hozier", 
@@ -260,4 +261,6 @@ sequelize.sync({ force: true })
         await entreprises[2].addUser(users[2]); // Paul - Mobilité Durable
         await entreprises[3].addUser(users[3]); // Sara - InnoTech
         await entreprises[4].addUser(users[4]); // Louis - Eco Solutions
+
+        await entreprises[0].addUser(mireille); // Mireille - La Poste
     })
