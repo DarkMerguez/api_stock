@@ -361,7 +361,11 @@ app.get("/:enterpriseId/favorites", async (req, res) => {
                 }
             });
         });
-        res.json(favoriteProducts);
+        // Trier les produits par quantité achetée (du plus grand au plus petit)
+        favoriteProducts.sort((a, b) => b.quantityBought - a.quantityBought);
+        // Récupérer un maximum de 3 produits favoris
+        const top3FavoriteProducts = favoriteProducts.slice(0, 3);
+        res.json(top3FavoriteProducts);
     }
     catch (error) {
         console.error("Erreur lors de la récupération des produits préférés :", error);
