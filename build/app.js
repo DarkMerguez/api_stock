@@ -325,6 +325,49 @@ app.post('/cart', checkJwt, async (req, res) => {
         res.status(500).json({ message: 'Error adding product to cart', error });
     }
 });
+// Récupérer les 3 produits les + commandés d'une entreprise
+app.get("/:enterpriseId/favorites", async (req, res) => {
+    try {
+        const enterpriseId = req.params.enterpriseId;
+        // Étape 1 : Récupérer toutes les commandes pour le buyerId
+        const orders = await Order.findAll({
+            where: { buyerId: enterpriseId },
+            include: {
+                model: Product,
+                through: {
+                    model: OrderProduct,
+                    attributes: ['quantity'], // Inclure la quantité
+                },
+                attributes: ['id', 'name', 'price'] // Attributs du produit que tu veux récupérer
+            }
+        });
+        // Étape 2 : Mapper pour récupérer les produits et leurs quantités
+        const favoriteProducts = [];
+        orders.forEach(order => {
+            order.Products.forEach(product => {
+                const existingProduct = favoriteProducts.find(p => p.id === product.id);
+                // Si le produit existe déjà dans la liste favorite, on cumule la quantité
+                if (existingProduct) {
+                    existingProduct.quantityBought += product.OrderProduct.quantity; // Cumuler la quantité
+                }
+                else {
+                    // Sinon, on l'ajoute à la liste
+                    favoriteProducts.push({
+                        id: product.id,
+                        name: product.name,
+                        price: product.price,
+                        quantityBought: product.OrderProduct.quantity // Quantité achetée
+                    });
+                }
+            });
+        });
+        res.json(favoriteProducts);
+    }
+    catch (error) {
+        console.error("Erreur lors de la récupération des produits préférés :", error);
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+});
 // ROUTES POUR LES ENTREPRISES :
 app.get("/enterprises", async (req, res) => {
     try {

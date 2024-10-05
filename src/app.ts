@@ -303,13 +303,13 @@ app.put("/product/:id", async (req, res) => {
 
                 // Créer une nouvelle entrée dans la table Images
                 const newImage = await Image.create({
-                    url: `http://localhost:8051/${image.name}`, 
+                    url: `http://localhost:8051/${image.name}`,
                 });
 
                 // Ajouter l'association à la table ProductImage
                 await ProductImage.create({
                     ProductId: req.params.id,
-                    ImageId: newImage.id 
+                    ImageId: newImage.id
                 });
             }
         }
@@ -371,6 +371,71 @@ app.post('/cart', checkJwt, async (req, res) => {
         res.status(500).json({ message: 'Error adding product to cart', error });
     }
 });
+
+
+// Récupérer les 3 produits les + commandés d'une entreprise
+
+app.get("/:enterpriseId/favorites", async (req, res) => {
+    try {
+        const enterpriseId = req.params.enterpriseId;
+
+        // Étape 1 : Récupérer toutes les commandes pour le buyerId
+        const orders = await Order.findAll({
+            where: { buyerId: enterpriseId },
+            include: {
+                model: Product,
+                through: { 
+                    model: OrderProduct,
+                    attributes: ['quantity'], // Inclure la quantité
+                },
+                attributes: ['id', 'name', 'price'] // Attributs du produit que tu veux récupérer
+            }
+        });
+
+        // Étape 2 : Mapper pour récupérer les produits et leurs quantités
+        const favoriteProducts = [];
+        
+        orders.forEach(order => {
+            order.Products.forEach(product => {
+                const existingProduct = favoriteProducts.find(p => p.id === product.id);
+
+                // Si le produit existe déjà dans la liste favorite, on cumule la quantité
+                if (existingProduct) {
+                    existingProduct.quantityBought += product.OrderProduct.quantity; // Cumuler la quantité
+                } else {
+                    // Sinon, on l'ajoute à la liste
+                    favoriteProducts.push({
+                        id: product.id,
+                        name: product.name,
+                        price: product.price,
+                        quantityBought: product.OrderProduct.quantity // Quantité achetée
+                    });
+                }
+            });
+        });
+
+        res.json(favoriteProducts);
+    } catch (error) {
+        console.error("Erreur lors de la récupération des produits préférés :", error);
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1226,7 +1291,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
                     buyerId: buyerId,
                     sellerId: sellerId, // Définir le sellerId de la commande
                     status: 'WaitingForValidation',
-                    totalPrice: totalPrice 
+                    totalPrice: totalPrice
                 });
 
                 // Ajouter les produits de la commande
@@ -1297,22 +1362,22 @@ app.get('/orders/:enterpriseId', async (req, res) => {
 app.put('/orders/:orderId/status', async (req, res) => {
     const { orderId } = req.params;
     const { status } = req.body;
-  
+
     try {
-      const order = await Order.findByPk(orderId);
-      if (!order) {
-        return res.status(404).json({ message: 'Commande non trouvée' });
-      }
-  
-      order.status = status;
-      await order.save();
-  
-      res.status(200).json({ message: 'Statut de la commande mis à jour avec succès' });
+        const order = await Order.findByPk(orderId);
+        if (!order) {
+            return res.status(404).json({ message: 'Commande non trouvée' });
+        }
+
+        order.status = status;
+        await order.save();
+
+        res.status(200).json({ message: 'Statut de la commande mis à jour avec succès' });
     } catch (error) {
-      console.error('Erreur lors de la mise à jour du statut de la commande:', error);
-      res.status(500).json({ message: 'Erreur lors de la mise à jour du statut de la commande' });
+        console.error('Erreur lors de la mise à jour du statut de la commande:', error);
+        res.status(500).json({ message: 'Erreur lors de la mise à jour du statut de la commande' });
     }
-  });
+});
 
 
 // Routes pour les factures :
@@ -1323,7 +1388,7 @@ const waitForFile = (filePath: string, timeout: number = 10000): Promise<void> =
 
         const checkFileExists = () => {
             if (fs.existsSync(filePath)) {
-                resolve(); 
+                resolve();
             } else if (Date.now() - start >= timeout) {
                 reject(new Error('File not found within timeout'));
             } else {
@@ -1360,7 +1425,7 @@ app.get('/bill/:orderId', async (req, res) => {
                 res.set('Expires', '0'); // Proxies.
 
                 // Créer un paramètre unique pour éviter le cache
-                const uniqueParam = new Date().getTime(); 
+                const uniqueParam = new Date().getTime();
                 return res.download(filePath, `Facture_${bill.id}.pdf?ts=${uniqueParam}`); // Télécharger la facture existante
             }
         }
@@ -1481,9 +1546,9 @@ app.get('/bill/:orderId', async (req, res) => {
         res.set('Cache-Control', 'no-cache, no-store, must-revalidate'); // HTTP 1.1.
         res.set('Pragma', 'no-cache'); // HTTP 1.0.
         res.set('Expires', '0'); // Proxies.
-        
+
         // Créer un paramètre unique
-        const uniqueParam = new Date().getTime(); 
+        const uniqueParam = new Date().getTime();
         return res.download(newFilePath, `Facture_${bill.id}.pdf?ts=${uniqueParam}`); // Télécharger la nouvelle facture
     } catch (error) {
         console.error('Error generating bill:', error);
